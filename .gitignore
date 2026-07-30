@@ -1,0 +1,25 @@
+# Dependencias y artefactos de JavaScript / Expo.
+node_modules/
+.expo/
+.expo-shared/
+dist/
+build/
+coverage/
+
+# Datos locales, respaldos y bases de datos.
+data/
+backups/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+
+# Configuración local y secretos.
+.env
+.env.*
+!.env.example
+
+# Archivos del sistema y editores.
+.DS_Store
+Thumbs.db
+*.log
