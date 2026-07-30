@@ -32,9 +32,10 @@ cuándo se acredita el rendimiento ni si puede retirarse o reinvertirse.
 | `INDEXED` | Indexada | índice, margen, reset y fuente de valores | Fuera del MVP |
 | `FIXED_AMOUNT` | Rendimiento fijo sin tasa | importe y reglas de pago | Pendiente |
 
-Las tasas negativas se rechazan. El límite superior inicial propuesto es
-`1000 %` por periodo original; superarlo requiere decisión explícita. Todo
-valor debe ser decimal finito.
+Las tasas negativas se rechazan. `numeric-policy-cop-v1` admite como máximo
+`100 %` por el periodo original y bloquea además cualquier conversión superior
+a `100 % E.A.`. Todo valor debe ser decimal finito. Estos topes son controles
+contra errores de entrada, no descripciones del mercado.
 
 ## Periodos compatibles
 
@@ -127,3 +128,19 @@ tasa automáticamente.
 - [IBR, Banco de la República](https://www.banrep.gov.co/es/glosario/indicador-bancario-referencia-ibr),
   consultado el 30 de julio de 2026; metodología versión 4 actualizada el 13 de
   mayo de 2026.
+
+## Estado del motor en Fase 2
+
+El catálogo marcado como aprobado está implementado en
+`src/domain/calculations/rates.ts`. La normalización conserva el porcentaje y
+tipo originales y produce una E.A. decimal canónica con método y fórmula
+versionados.
+
+`UNKNOWN` produce una evaluación bloqueada sin crear ni serializar una
+`InterestRateDefinition`. Una nominal sin frecuencia, una modalidad
+desconocida, una anticipada periódica mayor o igual a 100 %, un tipo ajeno al
+catálogo o una equivalencia importada manipulada se rechazan.
+
+La conversión de una nominal anticipada está disponible como normalización
+matemática. Esto no habilita flujos comerciales pagados por anticipado, que
+continúan fuera del alcance.

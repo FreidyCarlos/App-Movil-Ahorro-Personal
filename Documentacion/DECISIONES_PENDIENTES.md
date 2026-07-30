@@ -31,16 +31,107 @@ silenciosamente al implementar.
 - La reducción de periodos con overrides no se define para el MVP porque los
   overrides no se implementarán.
 
+## Decisiones técnicas cerradas al finalizar la Fase 2
+
+Estas políticas quedan propuestas como valores seguros del MVP y ya tienen
+implementación y pruebas. Permanecen sujetas a la revisión del responsable del
+producto antes del commit.
+
+### DC-01 — Límite de montos COP
+
+- Máximo por objetivo, saldo, aporte, retiro, ajuste absoluto y resultado
+  calculado: `10 000 000 000 COP`.
+- La aplicación puede configurar un límite menor, pero no uno mayor sin crear
+  y aprobar una nueva versión de política.
+- Se aplica al capturar, calcular y validar un snapshot importado.
+
+**Motivo sencillo:** diez mil millones cubren metas personales de valor alto,
+pero reducen el riesgo de agregar ceros por error o procesar cifras diseñadas
+para agotar recursos. La propuesta anterior de casi diez billones se descarta
+por excesiva.
+
+**Impacto técnico:** `numeric-policy-cop-v1` viaja en los metadatos del
+snapshot. SQLite deberá guardar el decimal como texto canónico y aplicar la
+misma validación en los casos de uso; el límite no justifica usar números
+binarios.
+
+### DC-02 — Límite de tasas
+
+- Tasas negativas: rechazadas.
+- Valor original: máximo `100 %` por el periodo declarado.
+- Equivalente canónica: máximo `100 % E.A.` (`1` decimal).
+- Una tasa mensual o nominal aparentemente menor también se bloquea si al
+  convertirla supera `100 % E.A.`.
+
+**Motivo sencillo:** una tasa de ahorro por encima de ese límite es más
+probablemente un error de tipo, periodo o digitación que un supuesto apropiado
+para este producto. El límite no afirma que sea jurídicamente imposible.
+
+**Impacto técnico:** la normalización valida el valor original y nuevamente la
+E.A. obtenida. La importación recalcula la tasa; no confía en la equivalencia
+guardada. La propuesta anterior de `1000 %` se descarta.
+
+### DC-03 — Redondeo COP
+
+- Cálculo interno: `Decimal` con 50 dígitos significativos, sin redondeo
+  monetario entre eventos.
+- Visualización y consolidación de cierres: peso completo, `HALF_UP`.
+- Política: `cop-half-up-0-v1`.
+- El valor preciso se conserva junto al consolidado; el consolidado no
+  reemplaza la fuente precisa.
+
+**Motivo sencillo:** si el valor tiene medio peso o más, se muestra el peso
+siguiente. Redondear solo al final evita que muchos redondeos pequeños alteren
+una proyección larga.
+
+**Impacto técnico:** los cierres generan siempre ambos valores y guardan la
+versión. Una regla de liquidación específica de una entidad requerirá otra
+política; no se imita silenciosamente.
+
+### DC-04 — Equivalencias importadas
+
+- Tolerancia híbrida versionada `1e-18`: se acepta cuando la diferencia
+  absoluta **o** la relativa es menor o igual a `1e-18`.
+- Método, fórmula y precisión deben coincidir exactamente con la versión
+  conocida.
+- Si excede la tolerancia, la importación se rechaza antes de modificar datos.
+
+**Motivo sencillo:** tolera diferencias minúsculas de precisión, pero no una
+tasa materialmente distinta ni una fórmula desconocida.
+
+**Impacto técnico:** `rate-equivalence-tolerance-v1` y su valor se incluyen en
+el snapshot. Una versión heredada solo podrá usar otra tolerancia mediante una
+migración conocida; los casos ambiguos continúan rechazados.
+
+### DC-05 — Momento predeterminado del aporte
+
+- El programador futuro ubicará el aporte periódico al cierre del periodo.
+- En la fecha programada, el motor usa `END_OF_DAY` por defecto.
+- En modo avanzado el usuario podrá seleccionar `START_OF_DAY`.
+
+**Motivo sencillo:** aplicar el aporte al final es conservador: no atribuye
+rendimiento a dinero que quizá todavía no había sido depositado.
+
+**Impacto técnico:** el valor predeterminado se materializa y persiste en la
+revisión; no se presenta como una regla del banco. Un aporte al final del día
+empieza a influir en el rendimiento desde el día siguiente.
+
+### DC-06 — Capitalización mensual con movimientos intermedios
+
+Continúa bloqueada en el MVP. Solo se calcula con una tasa única, meses
+calendario completos y sin aportes ni retiros intermedios.
+
+**Motivo sencillo:** sin conocer el calendario de corte y acreditación del
+producto no puede decidirse qué saldo genera rendimiento en un mes parcial.
+
+**Impacto técnico:** no se aproxima con capitalización diaria ni se inventa una
+fecha de corte. La Fase 3 puede persistir la configuración, pero debe conservar
+el estado bloqueado hasta que una versión futura modele ese calendario.
+
 ## Requieren aprobación del responsable del producto
 
-### DP-01 — Límites monetarios y de tasa
-
-Propuesta: monto máximo `9 999 999 999 999 COP`, tasa máxima `1000 %` por
-periodo original.
-
-Costo/riesgo: límites muy altos aumentan consumo y riesgo de entradas erróneas;
-límites bajos excluyen casos legítimos. Se propone aceptar los valores para
-validación técnica y ajustarlos con pruebas.
+Las decisiones siguientes no se resolvieron como efecto secundario del cierre.
+Requieren trabajo de su fase o validación adicional.
 
 ### DP-02 — Retiro superior al saldo
 
@@ -56,22 +147,6 @@ Propuesta: MVP soporta semanal, quincenal, mensual y anual. `CUSTOM` se limita a
 
 Riesgo: una regla genérica exige manejo de festivos, fin de mes y zona horaria.
 
-### DP-04 — Convención predeterminada de aporte
-
-Propuesta: aporte proyectado al final del día; modo avanzado puede escoger
-inicio del día. La pantalla explicará la diferencia.
-
-Riesgo: la fecha desde la que una entidad remunera puede diferir. No se debe
-presentar el valor predeterminado como condición bancaria.
-
-### DP-05 — Política monetaria COP
-
-Propuesta: cálculo interno con 28 dígitos significativos; visual COP al peso
-`HALF_UP`; cierre conserva valor preciso y consolidado.
-
-Riesgo: una entidad puede acreditar con otra precisión. Se necesita prueba de
-acumulación antes de congelar `rounding-policy-1`.
-
 ### DP-06 — Convenciones de días
 
 Propuesta: ofrecer 360/360, 365/365 y real/real según las definiciones
@@ -80,14 +155,6 @@ explícitamente días reales/365. `PRODUCT_DEFINED` bloquea hasta tener una regl
 
 Riesgo: real/real y 30/360 tienen variantes internacionales; se usarán códigos
 sin ambigüedad y no se inferirán por la frase genérica “base 360”.
-
-### DP-07 — Tolerancia de equivalencia importada
-
-Propuesta: comparación decimal relativa `1e-18`, conservando el dato importado
-y marcando revisión si excede la tolerancia.
-
-Riesgo: demasiado estricta puede rechazar versiones antiguas; demasiado amplia
-puede ocultar una conversión defectuosa.
 
 ### DP-08 — Tamaño y profundidad de copia
 
@@ -147,7 +214,7 @@ excluye. Requiere evaluar recuperación, exposición y comportamiento de Expo.
 Debe decidirse después de validar el stack y dispositivos disponibles. Android
 seguirá siendo la primera plataforma comprobada.
 
-## Investigación adicional antes de implementación
+## Investigación adicional antes de ampliar el soporte productivo
 
 - validar variantes y códigos exactos de 360/360, 365/365, real/real y ACT/365;
 - contrastar la política de acreditación de meses parciales para los modelos

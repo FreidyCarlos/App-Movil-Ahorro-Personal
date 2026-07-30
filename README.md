@@ -7,11 +7,34 @@ bancaria y sin depender de internet para sus funciones principales.
 ## Estado actual
 
 La definición del MVP, el modelo conceptual y las reglas financieras están
-documentados. La implementación móvil todavía no ha comenzado.
+documentados. La Fase 2 añadió un núcleo financiero TypeScript ejecutable,
+independiente de React Native, Expo, SQLite y APIs de red.
 
-No existe aún una versión instalable, una base SQLite productiva ni
-instrucciones de ejecución. Esta sección se actualizará cuando esté disponible
-el primer núcleo funcional.
+El núcleo calcula proyecciones simples y avanzadas, normaliza tasas, reconstruye
+movimientos reales, genera cierres, compara proyectado frente a real y valida
+una representación JSON de dominio. Todavía no existe una aplicación
+instalable, base SQLite productiva ni importación de archivos.
+
+El cierre técnico de Fase 2 fijó políticas versionadas y auditables: máximo de
+`10 000 000 000 COP`, máximo de `100 % E.A.` equivalente, redondeo al peso
+`HALF_UP` solo al presentar/consolidar, tolerancia de equivalencias `1e-18` y
+aporte proyectado al final del día por defecto. La capitalización mensual con
+movimientos intermedios permanece bloqueada porque requiere un calendario de
+acreditación explícito.
+
+### Ejecutar el núcleo
+
+Requiere Node.js 22 o posterior.
+
+```bash
+npm install
+npm run typecheck
+npm test
+npm run build
+```
+
+`npm run test:coverage` genera el informe local de cobertura. `dist/`,
+`coverage/` y `node_modules/` no se versionan.
 
 ## Alcance del MVP
 
@@ -69,7 +92,7 @@ Repositorios
 SQLite / archivos locales
 ```
 
-El dominio financiero será independiente de React Native, Expo y SQLite. Los
+El dominio financiero es independiente de React Native, Expo y SQLite. Los
 importes y tasas se calcularán con aritmética decimal y conservarán sus datos
 originales para trazabilidad.
 
@@ -96,6 +119,8 @@ cifrados mientras no exista una solución técnica comprobada.
 - [Criterios de aceptación](Documentacion/CRITERIOS_DE_ACEPTACION.md)
 - [Limitaciones](Documentacion/LIMITACIONES.md)
 - [Decisiones pendientes](Documentacion/DECISIONES_PENDIENTES.md)
+- [Arquitectura del núcleo](Documentacion/ARQUITECTURA.md)
+- [Plan y resultados de pruebas](Documentacion/PLAN_DE_PRUEBAS.md)
 
 La documentación pública del proyecto se mantiene en `Documentacion/`.
 

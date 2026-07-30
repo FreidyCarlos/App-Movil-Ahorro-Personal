@@ -27,6 +27,12 @@ Fecha: 30 de julio de 2026.
 - Las reglas de redondeo de una entidad pueden diferir de la política de la
   aplicación; el rendimiento real registrado prevalece.
 - COP es la única moneda soportada inicialmente.
+- Cada monto, saldo y resultado calculado se limita a
+  `10 000 000 000 COP`. Ampliarlo requiere una nueva política y revisión del
+  producto.
+- Se rechaza una tasa si su valor original supera `100 %` o si su equivalencia
+  supera `100 % E.A.`. Es un control contra errores, no una afirmación de que
+  otra tasa sea imposible en todo contexto.
 
 ## Producto
 
@@ -92,14 +98,28 @@ Fecha: 30 de julio de 2026.
 
 ## Estado actual
 
-La Fase 1 contiene solo definiciones y documentación. No existen todavía:
+La Fase 2 contiene un núcleo financiero TypeScript ejecutable y probado. No
+existen todavía:
 
 - aplicación React Native/Expo;
-- motor financiero ejecutable;
 - base SQLite ni migraciones;
-- importación/exportación;
-- interfaz ni pruebas automatizadas;
-- compilación o ejecución en emulador.
+- selección, lectura o escritura de archivos de importación/exportación;
+- interfaz, pruebas de componentes ni E2E;
+- compilación o ejecución en emulador;
+- cifrado, biometría o PIN.
+
+La capitalización mensual del núcleo solo admite una tasa única, meses
+calendario completos y ausencia de movimientos intermedios. Si el producto
+acredita en fechas específicas, calcula por saldos mínimos, paga fuera del
+capital o aplica otra condición comercial, el motor bloquea la simulación.
+
+El redondeo al peso `HALF_UP` es una política de presentación/consolidación de
+la aplicación, no la liquidación contractual de una entidad. El cálculo
+interno conserva decimales.
+
+El snapshot JSON de Fase 2 es una representación validada en memoria. No es aún
+el flujo portable seguro de Fase 3 y su huella no criptográfica no autentica una
+copia.
 
 ## Advertencia obligatoria
 

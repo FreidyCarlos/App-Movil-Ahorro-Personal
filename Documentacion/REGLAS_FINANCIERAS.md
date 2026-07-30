@@ -423,10 +423,13 @@ años; diferencia entre redondeo diario y final; importación.
 
 ## RF-19 — Límites y errores
 
-Propuesta inicial para aprobación:
+Política `numeric-policy-cop-v1`:
 
-- objetivo, saldo y movimiento: `0` a `9 999 999 999 999 COP`;
-- tasa original: `0 %` a `1000 %` por periodo;
+- objetivo, saldo, movimiento absoluto y resultado calculado:
+  `0` a `10 000 000 000 COP`;
+- tasa original: `0 %` a `100 %` por el periodo declarado;
+- tasa canónica después de convertir: `0` a `1` decimal, equivalente a
+  `0 %` a `100 % E.A.`;
 - horizonte: entre 1 día y 100 años;
 - proyección simple: entre 1 y 1200 meses o entre 1 y 100 años;
 - máximo 10 000 movimientos por meta y 1000 periodos de tasa;
@@ -436,7 +439,9 @@ Propuesta inicial para aprobación:
 - ajustes: importe distinto de cero y observación obligatoria.
 
 Un límite excedido genera error accionable; no trunca, satura ni convierte en
-cero.
+cero. Una configuración puede usar un máximo menor, pero superar el techo
+técnico exige una nueva política versionada. La validación se aplica también a
+snapshots importados.
 
 ## Casos donde el motor debe abstenerse
 
@@ -462,3 +467,28 @@ no una cifra aproximada.
 
 Debe aparecer al configurar una tasa, en resultados con rendimiento, en
 exportaciones/reportes que contengan proyecciones y en Información.
+
+## Estado de implementación de Fase 2
+
+Las reglas RF-00 a RF-19 tienen una implementación de dominio y pruebas
+unitarias.
+
+- La precisión del motor es de 50 dígitos significativos y no redondea dinero
+  entre eventos.
+- `cop-half-up-0-v1` cuantiza al peso con `HALF_UP` solo al mostrar o consolidar
+  y conserva el decimal preciso para cálculos posteriores.
+- `rate-equivalence-tolerance-v1` usa tolerancia absoluta o relativa `1e-18`;
+  método, fórmula y precisión deben coincidir.
+- Si no se suministra el momento del aporte, el motor aplica `END_OF_DAY` y
+  registra ese valor resuelto en la huella. La revisión persistida deberá
+  materializarlo.
+- La capitalización mensual se admite únicamente para meses calendario
+  completos, una tasa única y sin movimientos intermedios. Cualquier calendario
+  de acreditación más complejo se bloquea.
+- El plazo fijo simple exige que el final de la proyección coincida con el
+  vencimiento, una sola tasa fija y ningún evento.
+- El cierre calcula su huella sobre revisión, tipo, importe, fecha y estado de
+  cada movimiento; una corrección retroactiva lo vuelve obsoleto.
+
+Las fórmulas y restricciones continúan siendo la especificación normativa. El
+código no amplía soporte cuando la documentación ordena abstenerse.

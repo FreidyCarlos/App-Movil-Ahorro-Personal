@@ -172,3 +172,20 @@ El MVP no estará terminado sin resultados reales de:
   referencia.
 
 No se acepta una prueba no ejecutada ni una cifra corregida solo en la interfaz.
+
+## Evidencia parcial de Fase 2
+
+Se verificaron exclusivamente los criterios correspondientes al núcleo:
+
+- tasas cero, efectivas y nominales soportadas;
+- bloqueo de datos incompletos y `No estoy seguro`;
+- conservación de tasa original y equivalencia;
+- proyección simple mensual/anual;
+- proyección avanzada, cambios de tasa, aportes, retiros y restricciones;
+- ahorro real, cierres, proyección actualizada y comparación;
+- serialización de dominio v1 estricta y determinista.
+
+La ejecución registrada fue: 77 pruebas unitarias aprobadas, typecheck y build
+aprobados, y auditoría npm con 0 vulnerabilidades conocidas. Esto no satisface
+los criterios de persistencia, interfaz, E2E, compilación móvil ni dispositivo;
+el MVP completo sigue pendiente.

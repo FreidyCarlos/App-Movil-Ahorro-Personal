@@ -117,7 +117,7 @@ aplica.
 |---|---|
 | `id` | UUID |
 | `originalValue` | string decimal porcentual exacto |
-| `originalType` | catálogo de tasas, incluido `UNKNOWN` |
+| `originalType` | catálogo de tasas convertibles; `UNKNOWN` permanece como estado de captura y no crea esta entidad |
 | `originalPeriodicity` | periodo comunicado |
 | `capitalizationFrequency` | periodo o cantidad/año |
 | `timing` | `ADVANCE`, `DUE`, `NOT_APPLICABLE`, `UNKNOWN` |
@@ -320,3 +320,19 @@ válidos, y rechazará archivos ambiguos sin modificar datos.
 
 Los límites concretos de archivo permanecen en
 [`DECISIONES_PENDIENTES.md`](DECISIONES_PENDIENTES.md).
+
+## Correspondencia con la implementación de Fase 2
+
+Las entidades conceptuales tienen contratos TypeScript en
+`src/domain/models.ts`. Los objetos importables se validan con esquemas Zod
+cerrados en `src/domain/validation/schemas.ts`.
+
+La implementación no es todavía un esquema SQLite. Identificadores,
+relaciones, revisión activa, referencias de tasas y resultados se validan en el
+snapshot de dominio v1, pero su atomicidad y unicidad persistida se implementará
+en la Fase 3.
+
+`projectionMode`, valor/tipo original de tasa, equivalencia, versión de reglas,
+movimientos, revisiones, cierres y huellas forman parte del contrato
+serializable. Un archivo heredado sin `projectionMode` no se migra en esta
+versión: se rechaza por esquema.
