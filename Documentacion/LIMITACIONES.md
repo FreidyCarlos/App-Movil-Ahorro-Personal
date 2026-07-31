@@ -98,6 +98,24 @@ Fecha: 30 de julio de 2026.
   mínimas del sistema.
 - Funcionamiento sin conexión cubre los flujos del producto; abrir una fuente
   externa sí requiere conectividad y consentimiento.
+- El dispositivo prevalidado ejecuta Android 9/API 28, tiene cerca de 2,68 GiB
+  de RAM y un parche de seguridad de 2020. Es útil para compatibilidad y
+  restricciones de recursos, pero no representa Android reciente.
+- Los aproximadamente 6,81 GiB libres alcanzan para pruebas ordinarias; no
+  demuestran comportamiento correcto cuando el almacenamiento se agota.
+
+## Entorno móvil prevalidado
+
+- ADB detectó un único teléfono autorizado en estado `device` y mantuvo 8 de 8
+  sondas USB consecutivas.
+- ADB no está disponible en `PATH`; solo se pudo reutilizar el ejecutable de un
+  proceso activo. La disponibilidad no es estable si ese proceso desaparece.
+- Node y npm están disponibles.
+- Solo existe un Java Runtime 8; faltan JDK, `javac` y `JAVA_HOME`.
+- No se verificó un Android SDK completo, variables de SDK, `sdkmanager`,
+  plataforma ni Build Tools.
+- Expo y EAS no están instalados.
+- No se ejecutó una instalación real porque todavía no existe un APK propio.
 
 ## Estado actual
 
@@ -133,6 +151,11 @@ La integración SQLite real se prueba con el módulo incluido en Node 24.15. El
 adaptador estructural de Expo está implementado, pero su conexión a
 `expo-sqlite`, rendimiento, WAL y archivos deben verificarse en Android/iOS
 durante la Fase 4.
+
+Expo Go no será criterio de aceptación. La estrategia recomendada usa un
+development build; EAS Build evita instalar herramientas nativas locales, pero
+requiere autorización para cuenta y servicio remoto. La ruta local exige JDK 17
+y Android SDK por línea de comandos.
 
 ## Advertencia obligatoria
 

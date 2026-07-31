@@ -199,6 +199,13 @@ eliminarse completamente sin perder datos ni impedir el recálculo.
   ficticio.
 - Proyecciones y comparaciones no se almacenan ni se exportan; se recalculan con
   el motor vigente.
+- La aceptación móvil requiere un development build propio. Expo Go solo puede
+  utilizarse para comprobaciones preliminares.
+- Android Studio no se instalará por defecto: EAS Build es la ruta inicial más
+  liviana si se autoriza el servicio; JDK 17 y SDK por línea de comandos son la
+  alternativa local.
+
+## Decisiones financieras y de producto pendientes
 
 ### DP-10 — Soporte exacto de plazo fijo
 
@@ -239,8 +246,19 @@ excluye. Requiere evaluar recuperación, exposición y comportamiento de Expo.
 
 ### DP-15 — Versiones mínimas y alcance iOS
 
-Debe decidirse después de validar el stack y dispositivos disponibles. Android
-seguirá siendo la primera plataforma comprobada.
+El Moto X4 con Android 9/API 28 es compatible con el mínimo Android 7 de Expo
+SDK 57. La versión exacta del SDK se fijará al iniciar Fase 4. Siguen pendientes
+las versiones mínimas definitivas de producto y el alcance iOS.
+
+### DP-16 — Origen del primer development build
+
+Recomendación: usar EAS Build para obtener el primer APK sin instalar el SDK
+Android completo. Requiere aprobación explícita porque implica cuenta,
+conectividad y procesamiento remoto del código.
+
+Alternativa sin servicio remoto: instalar JDK 17 y Android SDK Command-Line
+Tools con plataforma y Build Tools. No se requiere Android Studio para probar
+en el dispositivo físico.
 
 ## Investigación adicional antes de ampliar el soporte productivo
 

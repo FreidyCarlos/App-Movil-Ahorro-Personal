@@ -134,6 +134,17 @@ interfaz React Native/Expo ni se ha validado el adaptador en Android/iOS.
 Las pruebas reales de falta de espacio, cierre abrupto y selector móvil también
 corresponden a la Fase 4.
 
+La prevalidación física confirmó Android 9/API 28 y ARM64, compatibles con el
+mínimo Android 7 de Expo SDK 57. La estrategia de validación será un development
+build propio; Expo Go no será evidencia suficiente para persistencia,
+configuración nativa, reinstalación o entrega.
+
+Mientras no exista un SDK/JDK local, la ruta más liviana es un APK de desarrollo
+generado por EAS Build, sujeto a autorización para usar cuenta, red y servicio
+remoto. La alternativa sin nube es JDK 17 más Android SDK Command-Line Tools,
+plataforma y Build Tools. Android Studio no es requisito inicial al disponer de
+un dispositivo físico.
+
 La integración Node usa el SQLite incluido en Node 24.15 únicamente para pruebas
 con archivos temporales reales. No es una dependencia del binario móvil.
 

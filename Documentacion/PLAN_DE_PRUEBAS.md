@@ -11,6 +11,69 @@ ejecutadas; componentes móviles y E2E permanecen pendientes.
 - SQLite real de Node 24.15 y archivos temporales para integración.
 - `npm audit` contra el registro oficial para vulnerabilidades conocidas.
 
+## Prevalidación móvil de Fase 4
+
+Consulta: 30 de julio de 2026. Se usó un Moto X4 físico sin registrar ni
+publicar su número de serie.
+
+| Control | Resultado no destructivo |
+|---|---|
+| `adb devices` | un dispositivo autorizado en estado `device` |
+| Sistema | Android 9, API 28, parche de seguridad 2020-01-01 |
+| Arquitectura | ARM64; también declara ABI ARM de 32 bits |
+| Recursos | aproximadamente 2,68 GiB de RAM y 6,81 GiB libres en `/data` |
+| Pantalla | 1080 × 1920, densidad física 480 |
+| USB | estado/configuración `adb`; 8 de 8 sondas consecutivas correctas |
+| Autorización | ADB seguro activo y depuración habilitada |
+| Instalación | cliente ADB admite `install`; Package Manager e instalador responden |
+
+No se instaló un APK: la prueba de instalación real necesita primero un
+artefacto propio y autorización dentro de la Fase 4.
+
+Entorno del equipo:
+
+- Node 24.15.0 y npm 11.12.1 disponibles. Expo SDK 57 exige como mínimo Node
+  22.13.x, por lo que la versión supera el mínimo documentado.
+- Existe Java Runtime 8, pero no `javac`, JDK ni `JAVA_HOME`; no permite una
+  compilación Android local moderna.
+- ADB 37.0.1 está activo y funcional, pero no está en `PATH`; se localizó a
+  través del proceso ya iniciado. Esto no sustituye un SDK configurado.
+- No se detectaron `ANDROID_HOME`, `ANDROID_SDK_ROOT`, `sdkmanager`, plataforma
+  Android ni Build Tools verificables.
+- Expo CLI, EAS CLI y dependencias Expo locales aún no existen.
+
+Android 9 es compatible con Expo SDK 57, cuyo mínimo documentado es Android 7.
+El SDK exacto se fijará al crear el proyecto en Fase 4, no durante esta
+prevalidación.
+
+### Estrategia recomendada
+
+El artefacto principal de pruebas debe ser un **development build de Expo**:
+
+1. opción inicial menos pesada: EAS Build genera un APK de desarrollo, si el
+   responsable autoriza cuenta, conectividad y carga del código al servicio;
+2. instalar el APK por USB con ADB y trabajar con `expo-dev-client`;
+3. usar Expo Go, como máximo, para smoke tests tempranos; no es evidencia de
+   aceptación del binario propio;
+4. si no se autoriza nube, instalar JDK 17 y Android SDK Command-Line Tools,
+   plataforma y Build Tools. Android Studio no es necesario mientras se use el
+   dispositivo físico y la línea de comandos.
+
+La recomendación se basa en que Expo Go tiene un conjunto nativo fijo, mientras
+que un development build admite configuración y módulos del proyecto. Aunque
+`expo-sqlite` y `expo-document-picker` figuran incluidos en Expo Go, deben
+probarse en el binario propio, con su sandbox, ciclo de vida y configuración.
+
+Fuentes oficiales consultadas el 30 de julio de 2026:
+
+- [Versiones y mínimos de Expo SDK](https://docs.expo.dev/versions/latest/)
+- [Introducción a development builds](https://docs.expo.dev/develop/development-builds/introduction/)
+- [APK para dispositivo Android](https://docs.expo.dev/build-reference/apk/)
+- [Expo SQLite](https://docs.expo.dev/versions/v56.0.0/sdk/sqlite/)
+- [Expo DocumentPicker](https://docs.expo.dev/versions/latest/sdk/document-picker/)
+- [Entorno Android de React Native](https://reactnative.dev/docs/next/set-up-your-environment)
+- [Android SDK Command-Line Tools](https://developer.android.com/tools/sdkmanager)
+
 ## Suite de Fase 2
 
 La suite cubre:
@@ -67,8 +130,8 @@ o aceptar datos corruptos. Como resultado se añadieron casos para:
   actualizada;
 - cierre real inválido en la comparación;
 - fórmula, equivalencia, precisión, monto y tasa manipulados en snapshots;
-- configuración activa, producto, movimiento, revisión, periodo, cierre,
-  proyección y comparación con relaciones inválidas;
+- configuración activa, producto, movimiento, revisión, periodo y cierre con
+  relaciones inválidas, y rechazo de resultados derivados en el snapshot;
 - ausencia de `projectionMode`, versión futura, JSON corrupto, Unicode, tamaño,
   profundidad, ciclos y máximos de registros.
 
@@ -122,6 +185,12 @@ concentran en corrupción o pérdida de datos.
   Android;
 - conectar selector, compartición y sistema de archivos móvil.
 - ejecutar falta de espacio y cierre abrupto reales en dispositivo.
+- crear e instalar un development APK, comprobar apertura, cierre forzado,
+  persistencia, actualización y reinstalación;
+- capturar únicamente logs filtrados por aplicación/PID y verificar que no
+  expongan datos financieros;
+- solicitar autorización antes de desinstalar, limpiar datos o provocar
+  deliberadamente falta de espacio.
 
 ### Fases 5 a 7
 
