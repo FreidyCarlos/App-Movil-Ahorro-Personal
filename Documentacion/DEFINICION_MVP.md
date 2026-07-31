@@ -234,9 +234,10 @@ Fase 1 no crea estas capas ni instala dependencias.
 
 ## Seguridad y privacidad del producto
 
-Datos locales: metas, importes, movimientos, supuestos, tasas, resultados,
-revisiones y preferencias. Nunca se almacenan credenciales bancarias, tokens,
-contraseñas, tarjetas ni secretos.
+Datos locales: metas, importes, movimientos, supuestos, tasas, revisiones,
+cierres auditables, preferencias y metadatos. Proyecciones y comparaciones se
+recalculan y no son fuente de verdad persistente. Nunca se almacenan
+credenciales bancarias, tokens, contraseñas, tarjetas ni secretos.
 
 Riesgos principales:
 

@@ -1,13 +1,14 @@
 # Plan de pruebas
 
-Fecha: 30 de julio de 2026. Estado: pruebas unitarias de Fase 2 ejecutadas;
-integración SQLite, componentes móviles y E2E permanecen pendientes.
+Fecha: 30 de julio de 2026. Estado: pruebas unitarias e integración de Fase 3
+ejecutadas; componentes móviles y E2E permanecen pendientes.
 
 ## Herramientas
 
 - TypeScript en modo estricto para validación estática.
 - Vitest para pruebas unitarias.
 - Cobertura V8 para medir sentencias, ramas, funciones y líneas.
+- SQLite real de Node 24.15 y archivos temporales para integración.
 - `npm audit` contra el registro oficial para vulnerabilidades conocidas.
 
 ## Suite de Fase 2
@@ -40,8 +41,8 @@ generar su propio resultado esperado.
 | Control | Resultado |
 |---|---|
 | `npm run typecheck` | aprobado |
-| `npm test` | 8 archivos, 90 pruebas aprobadas |
-| `npm run test:coverage` | 90 pruebas; 95,65 % sentencias, 87,13 % ramas, 97,16 % funciones, 95,57 % líneas |
+| `npm test` | 12 archivos, 119 pruebas aprobadas |
+| `npm run test:coverage` | 119 pruebas; 93,54 % sentencias, 81,05 % ramas, 95,52 % funciones, 93,86 % líneas |
 | `npm run build` | aprobado |
 | `npm audit --audit-level=high` | 0 vulnerabilidades conocidas |
 
@@ -76,19 +77,51 @@ JavaScript válido, campos opcionales sin efecto financiero y mensajes
 alternativos de un mismo rechazo ya probado. No se añadieron pruebas
 artificiales para elevar el porcentaje.
 
+## Suite de integración de Fase 3
+
+`tests/sqlite-persistence.test.ts` cubre:
+
+- creación, migración, versión e identidad de base;
+- reinicio y reconstrucción completa;
+- claves foráneas y consultas parametrizadas;
+- base ajena, futura, alterada o corrupta;
+- migración y transacción interrumpidas;
+- unidad de trabajo y rollback por unicidad.
+
+`tests/backup-import.test.ts` cubre:
+
+- exportación y SHA-256;
+- vista previa y confirmación;
+- importación inicial;
+- respaldo automático y reemplazo;
+- rollback ante restricción o fallo de archivo;
+- versión, JSON, checksum, extensión, tamaño, ruta y sobrescritura.
+
+`tests/expo-sqlite-adapter.test.ts` comprueba la traducción del puerto hacia la
+API estructural de `expo-sqlite`, incluida la transacción exclusiva.
+
+`tests/snapshot-relations.test.ts` comprueba propiedad cruzada entre metas,
+configuraciones, productos, periodos, movimientos, revisiones y respaldos antes
+de escribir.
+
+La validación del snapshot rechaza campos de resultados derivados para impedir
+que proyecciones o comparaciones se conviertan en fuente de verdad persistente.
+
+No se buscó mantener artificialmente el porcentaje anterior: la capa nueva
+incluye defensas de plataforma difíciles de forzar sin dobles de prueba
+irreales. Las ramas financieras conservan su cobertura y las pruebas nuevas se
+concentran en corrupción o pérdida de datos.
+
 ## Pendiente por fase
-
-### Fase 3
-
-- SQLite temporal real, migraciones, transacciones y reinicio;
-- repositorios y conservación de revisiones;
-- exportación/importación de archivo, respaldo y rollback;
-- interrupción, falta de espacio y base dañada.
 
 ### Fase 4
 
 - formularios, navegación, estados vacíos y errores de almacenamiento;
 - datos provenientes de repositorios reales.
+- repetir migraciones, reinicio, archivos y transacciones con `expo-sqlite` en
+  Android;
+- conectar selector, compartición y sistema de archivos móvil.
+- ejecutar falta de espacio y cierre abrupto reales en dispositivo.
 
 ### Fases 5 a 7
 

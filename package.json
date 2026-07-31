@@ -10,20 +10,26 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js"
     }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "npm run build:portable && npm run build:node",
+    "build:portable": "tsc -p tsconfig.build.json",
+    "build:node": "tsc -p tsconfig.node.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "check": "npm run typecheck && npm test && npm run build"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24.15.0"
   },
   "dependencies": {
     "decimal.js": "10.6.0",

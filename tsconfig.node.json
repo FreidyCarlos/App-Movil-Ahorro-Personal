@@ -1,19 +1,15 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "./tsconfig.build.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src",
-    "types": []
+    "types": [
+      "node"
+    ]
   },
   "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "tests",
-    "**/*.test.ts",
     "src/node.ts",
     "src/infrastructure/crypto/node-sha256.ts",
     "src/infrastructure/database/node-sqlite-database.ts",
     "src/infrastructure/files/safe-node-backup-file-store.ts"
-  ]
+  ],
+  "exclude": []
 }

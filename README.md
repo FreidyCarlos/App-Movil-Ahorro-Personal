@@ -6,14 +6,20 @@ bancaria y sin depender de internet para sus funciones principales.
 
 ## Estado actual
 
-La definición del MVP, el modelo conceptual y las reglas financieras están
-documentados. La Fase 2 añadió un núcleo financiero TypeScript ejecutable,
-independiente de React Native, Expo, SQLite y APIs de red.
+La definición del MVP, el modelo y las reglas financieras están documentados.
+La Fase 2 añadió un núcleo financiero TypeScript independiente. La Fase 3
+incorporó esquema SQLite v1, migraciones, repositorio transaccional y copias
+JSON portables con respaldo y rollback.
 
 El núcleo calcula proyecciones simples y avanzadas, normaliza tasas, reconstruye
 movimientos reales, genera cierres, compara proyectado frente a real y valida
-una representación JSON de dominio. Todavía no existe una aplicación
-instalable, base SQLite productiva ni importación de archivos.
+una representación JSON de dominio. La integración usa SQLite real en pruebas
+Node y deja un adaptador estructural para `expo-sqlite`. Todavía no existe una
+aplicación instalable ni una validación en dispositivo móvil.
+
+Los datos base, revisiones, configuraciones y metadatos auditables son la fuente
+de verdad. Proyecciones y comparaciones se recalculan con el motor vigente; no
+se almacenan ni se incluyen en las copias.
 
 El cierre técnico de Fase 2 fijó políticas versionadas y auditables: máximo de
 `10 000 000 000 COP`, máximo de `100 % E.A.` equivalente, redondeo al peso
@@ -22,9 +28,10 @@ aporte proyectado al final del día por defecto. La capitalización mensual con
 movimientos intermedios permanece bloqueada porque requiere un calendario de
 acreditación explícito.
 
-### Ejecutar el núcleo
+### Ejecutar núcleo y persistencia
 
-Requiere Node.js 22 o posterior.
+Requiere Node.js 24.15 o posterior para ejecutar las pruebas SQLite con modo
+defensivo.
 
 ```bash
 npm install
@@ -35,6 +42,10 @@ npm run build
 
 `npm run test:coverage` genera el informe local de cobertura. `dist/`,
 `coverage/` y `node_modules/` no se versionan.
+
+Las pruebas de integración crean bases y copias únicamente en carpetas
+temporales del sistema. El subpath `./node` contiene adaptadores de prueba;
+la entrada principal no importa APIs de Node.
 
 ## Alcance del MVP
 
@@ -98,13 +109,14 @@ originales para trazabilidad.
 
 ## Datos y seguridad
 
-SQLite será la fuente única de verdad financiera. Las copias portables usarán
-JSON versionado, validación completa y reemplazo transaccional con respaldo
-previo.
+SQLite es la fuente única de verdad financiera del diseño implementado. Las
+copias portables usan JSON versionado, SHA-256 contra daño, validación completa
+y reemplazo transaccional con respaldo previo.
 
 La primera versión no almacenará credenciales bancarias, contraseñas, tarjetas,
 tokens ni secretos. El almacenamiento local y las copias no se presentarán como
-cifrados mientras no exista una solución técnica comprobada.
+cifrados mientras no exista una solución técnica comprobada. La combinación
+automática de historiales queda fuera del MVP.
 
 ## Documentación
 
@@ -121,6 +133,9 @@ cifrados mientras no exista una solución técnica comprobada.
 - [Decisiones pendientes](Documentacion/DECISIONES_PENDIENTES.md)
 - [Arquitectura del núcleo](Documentacion/ARQUITECTURA.md)
 - [Plan y resultados de pruebas](Documentacion/PLAN_DE_PRUEBAS.md)
+- [Migraciones y SQLite](Documentacion/MIGRACIONES.md)
+- [Respaldos e importación](Documentacion/RESPALDOS_E_IMPORTACION.md)
+- [Modelo de amenazas](Documentacion/MODELO_DE_AMENAZAS.md)
 
 La documentación pública del proyecto se mantiene en `Documentacion/`.
 

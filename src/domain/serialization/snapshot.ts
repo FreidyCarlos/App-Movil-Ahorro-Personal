@@ -21,11 +21,9 @@ import {
   actualPeriodCloseSchema,
   appSettingsSchema,
   backupMetadataSchema,
-  comparisonResultSchema,
   financialProductConfigurationSchema,
   interestRateDefinitionSchema,
   movementRevisionSchema,
-  projectionResultSchema,
   savingsGoalSchema,
   savingsMovementSchema,
   savingsPlanConfigurationSchema,
@@ -73,14 +71,36 @@ export const domainSnapshotV1Schema = z
     movements: z.array(savingsMovementSchema),
     movementRevisions: z.array(movementRevisionSchema),
     closes: z.array(actualPeriodCloseSchema),
-    projectionResults: z.array(projectionResultSchema),
-    comparisonResults: z.array(comparisonResultSchema),
     backupMetadata: z.array(backupMetadataSchema),
     settings: appSettingsSchema,
   })
   .strict();
 
 export type DomainSnapshotV1 = z.infer<typeof domainSnapshotV1Schema>;
+
+function orderedById<T extends Readonly<{ id: string }>>(
+  entries: readonly T[],
+): T[] {
+  return [...entries].sort((left, right) => left.id.localeCompare(right.id));
+}
+
+export function canonicalizeSnapshot(
+  snapshot: DomainSnapshotV1,
+): DomainSnapshotV1 {
+  return {
+    ...snapshot,
+    goals: orderedById(snapshot.goals),
+    configurations: orderedById(snapshot.configurations),
+    simpleConfigurations: orderedById(snapshot.simpleConfigurations),
+    rateDefinitions: orderedById(snapshot.rateDefinitions),
+    ratePeriods: orderedById(snapshot.ratePeriods),
+    productConfigurations: orderedById(snapshot.productConfigurations),
+    movements: orderedById(snapshot.movements),
+    movementRevisions: orderedById(snapshot.movementRevisions),
+    closes: orderedById(snapshot.closes),
+    backupMetadata: orderedById(snapshot.backupMetadata),
+  };
+}
 
 export interface SerializationLimits {
   readonly maximumBytes: number;
@@ -301,11 +321,6 @@ function validateSnapshotNumericPolicy(
       `simpleConfigurations.${simple.id}.periodicAmount`,
       limits,
     );
-    validateImportedAmount(
-      simple.projectedTotal,
-      `simpleConfigurations.${simple.id}.projectedTotal`,
-      limits,
-    );
   }
   for (const product of snapshot.productConfigurations) {
     validateImportedAmount(
@@ -349,68 +364,6 @@ function validateSnapshotNumericPolicy(
       true,
     );
   }
-  for (const projection of snapshot.projectionResults) {
-    for (const [field, value] of Object.entries({
-      initialBalance: projection.initialBalance,
-      projectedContributions: projection.projectedContributions,
-      projectedExtraContributions: projection.projectedExtraContributions,
-      projectedWithdrawals: projection.projectedWithdrawals,
-      projectedYield: projection.projectedYield,
-      finalBalance: projection.finalBalance,
-    })) {
-      validateImportedAmount(
-        value,
-        `projectionResults.${projection.id}.${field}`,
-        limits,
-      );
-    }
-    for (const [index, point] of projection.trajectory.entries()) {
-      for (const [field, value] of Object.entries({
-        balance: point.balance,
-        contributions: point.contributions,
-        extraContributions: point.extraContributions,
-        withdrawals: point.withdrawals,
-        projectedYield: point.projectedYield,
-      })) {
-        validateImportedAmount(
-          value,
-          `projectionResults.${projection.id}.trajectory.${index}.${field}`,
-          limits,
-        );
-      }
-    }
-  }
-  for (const comparison of snapshot.comparisonResults) {
-    for (const [field, value] of Object.entries({
-      projectedContributions: comparison.projectedContributions,
-      actualContributions: comparison.actualContributions,
-      projectedWithdrawals: comparison.projectedWithdrawals,
-      actualWithdrawals: comparison.actualWithdrawals,
-      projectedYield: comparison.projectedYield,
-      actualYield: comparison.actualYield,
-      projectedBalance: comparison.projectedBalance,
-      actualBalance: comparison.actualBalance,
-    })) {
-      validateImportedAmount(
-        value,
-        `comparisonResults.${comparison.id}.${field}`,
-        limits,
-      );
-    }
-    for (const [field, value] of Object.entries({
-      contributionDifference: comparison.contributionDifference,
-      withdrawalDifference: comparison.withdrawalDifference,
-      yieldDifference: comparison.yieldDifference,
-      balanceDifference: comparison.balanceDifference,
-    })) {
-      validateImportedAmount(
-        value,
-        `comparisonResults.${comparison.id}.${field}`,
-        limits,
-        true,
-      );
-    }
-  }
 }
 
 function validateSnapshotRelations(
@@ -427,8 +380,7 @@ function validateSnapshotRelations(
   validateUniqueIds("movements", snapshot.movements);
   validateUniqueIds("movementRevisions", snapshot.movementRevisions);
   validateUniqueIds("closes", snapshot.closes);
-  validateUniqueIds("projectionResults", snapshot.projectionResults);
-  validateUniqueIds("comparisonResults", snapshot.comparisonResults);
+  validateUniqueIds("backupMetadata", snapshot.backupMetadata);
 
   const goalIds = new Set(snapshot.goals.map(({ id }) => id));
   const configurationIds = new Set(snapshot.configurations.map(({ id }) => id));
@@ -444,11 +396,17 @@ function validateSnapshotRelations(
   const productsById = new Map(
     snapshot.productConfigurations.map((product) => [product.id, product]),
   );
-  const rateDefinitionIds = new Set(snapshot.rateDefinitions.map(({ id }) => id));
-  const movementIds = new Set(snapshot.movements.map(({ id }) => id));
-  const closeIds = new Set(snapshot.closes.map(({ id }) => id));
-  const projectionsById = new Map(
-    snapshot.projectionResults.map((projection) => [projection.id, projection]),
+  const rateDefinitionsById = new Map(
+    snapshot.rateDefinitions.map((definition) => [definition.id, definition]),
+  );
+  const movementsById = new Map(
+    snapshot.movements.map((movement) => [movement.id, movement]),
+  );
+  const movementRevisionsById = new Map(
+    snapshot.movementRevisions.map((revision) => [revision.id, revision]),
+  );
+  const ratePeriodsById = new Map(
+    snapshot.ratePeriods.map((period) => [period.id, period]),
   );
   for (const goal of snapshot.goals) {
     const active = configurationsById.get(goal.activeConfigurationId);
@@ -492,55 +450,134 @@ function validateSnapshotRelations(
     if (configuration.productConfigurationId !== undefined) {
       const product = productsById.get(configuration.productConfigurationId);
       assertDomain(
-        product !== undefined && product.configurationId === configuration.id,
+        configuration.projectionMode === "ADVANCED" &&
+          product !== undefined &&
+          product.configurationId === configuration.id,
         "SERIALIZATION_ERROR",
-        "El producto no existe o no corresponde a su revisión.",
+        "El producto no existe, no corresponde o se asignó a una revisión simple.",
+        { configurationId: configuration.id },
+      );
+    }
+    if (configuration.supersedesId !== undefined) {
+      const previous = configurationsById.get(configuration.supersedesId);
+      assertDomain(
+        previous !== undefined &&
+          previous.goalId === configuration.goalId &&
+          previous.revisionNumber < configuration.revisionNumber,
+        "SERIALIZATION_ERROR",
+        "La cadena de revisiones de la configuración es inválida.",
         { configurationId: configuration.id },
       );
     }
   }
   for (const simple of snapshot.simpleConfigurations) {
+    const owner = configurationsById.get(simple.configurationId);
     assertDomain(
-      configurationIds.has(simple.configurationId),
+      owner !== undefined &&
+        owner.simpleProjectionConfigurationId === simple.id,
       "SERIALIZATION_ERROR",
-      "Configuración simple huérfana.",
+      "Configuración simple huérfana o no declarada por su revisión.",
       { simpleConfigurationId: simple.id },
     );
   }
   for (const product of snapshot.productConfigurations) {
+    const owner = configurationsById.get(product.configurationId);
     assertDomain(
-      configurationIds.has(product.configurationId),
+      owner !== undefined &&
+        owner.projectionMode === "ADVANCED" &&
+        owner.productConfigurationId === product.id,
       "SERIALIZATION_ERROR",
-      "Configuración de producto huérfana.",
+      "Configuración de producto huérfana o no declarada por su revisión.",
       { productConfigurationId: product.id },
     );
+    if (product.supersedesId !== undefined) {
+      const previous = productsById.get(product.supersedesId);
+      const previousOwner =
+        previous === undefined
+          ? undefined
+          : configurationsById.get(previous.configurationId);
+      assertDomain(
+        previous !== undefined &&
+          previousOwner !== undefined &&
+          owner !== undefined &&
+          previousOwner.goalId === owner.goalId,
+        "SERIALIZATION_ERROR",
+        "La cadena de revisiones del producto es inválida.",
+        { productConfigurationId: product.id },
+      );
+    }
   }
+  const deduplicationKeys = new Set<string>();
   for (const movement of snapshot.movements) {
+    const currentRevision = movementRevisionsById.get(
+      movement.currentRevisionId,
+    );
     assertDomain(
-      goalIds.has(movement.goalId),
+      goalIds.has(movement.goalId) &&
+        currentRevision !== undefined &&
+        currentRevision.movementId === movement.id &&
+        stableStringify(currentRevision.snapshot) === stableStringify(movement),
       "SERIALIZATION_ERROR",
-      "Movimiento huérfano.",
+      "Movimiento huérfano o revisión vigente inconsistente.",
       { movementId: movement.id },
     );
+    if (movement.deduplicationKey !== undefined) {
+      const key = `${movement.goalId}:${movement.deduplicationKey}`;
+      assertDomain(
+        !deduplicationKeys.has(key),
+        "SERIALIZATION_ERROR",
+        "La copia contiene movimientos duplicados.",
+        { movementId: movement.id },
+      );
+      deduplicationKeys.add(key);
+    }
   }
   for (const revision of snapshot.movementRevisions) {
+    const movement = movementsById.get(revision.movementId);
     assertDomain(
-      movementIds.has(revision.movementId) &&
-        revision.snapshot.id === revision.movementId,
+      movement !== undefined &&
+        revision.snapshot.id === revision.movementId &&
+        revision.snapshot.goalId === movement.goalId,
       "SERIALIZATION_ERROR",
       "Revisión de movimiento huérfana o inconsistente.",
       { revisionId: revision.id },
     );
+    if (revision.supersedesId !== undefined) {
+      const previous = movementRevisionsById.get(revision.supersedesId);
+      assertDomain(
+        previous !== undefined &&
+          previous.movementId === revision.movementId &&
+          previous.revisionNumber < revision.revisionNumber,
+        "SERIALIZATION_ERROR",
+        "La cadena de revisiones del movimiento es inválida.",
+        { revisionId: revision.id },
+      );
+    }
   }
   for (const period of snapshot.ratePeriods) {
+    const configuration = configurationsById.get(period.configurationId);
+    const rate = rateDefinitionsById.get(period.rateDefinitionId);
     assertDomain(
       goalIds.has(period.goalId) &&
-        configurationIds.has(period.configurationId) &&
-        rateDefinitionIds.has(period.rateDefinitionId),
+        configuration !== undefined &&
+        configuration.goalId === period.goalId &&
+        rate !== undefined &&
+        rate.effectiveFrom <= period.startDate,
       "SERIALIZATION_ERROR",
-      "Periodo de tasa con relación inexistente.",
+      "Periodo de tasa con relación o vigencia inválida.",
       { periodId: period.id },
     );
+    if (period.supersedesId !== undefined) {
+      const previous = ratePeriodsById.get(period.supersedesId);
+      assertDomain(
+        previous !== undefined &&
+          previous.configurationId === period.configurationId &&
+          previous.purpose === period.purpose,
+        "SERIALIZATION_ERROR",
+        "La cadena de periodos de tasa es inválida.",
+        { periodId: period.id },
+      );
+    }
   }
   const periodGroups = new Map<string, typeof snapshot.ratePeriods>();
   for (const period of snapshot.ratePeriods) {
@@ -564,35 +601,34 @@ function validateSnapshotRelations(
     }
   }
   for (const close of snapshot.closes) {
+    const configuration = configurationsById.get(
+      close.configurationRevisionId,
+    );
     assertDomain(
       goalIds.has(close.goalId) &&
-        configurationIds.has(close.configurationRevisionId),
+        configuration !== undefined &&
+        configuration.goalId === close.goalId,
       "SERIALIZATION_ERROR",
       "Cierre huérfano.",
       { closeId: close.id },
     );
   }
-  for (const projection of snapshot.projectionResults) {
+  const backupIds = new Set(snapshot.backupMetadata.map(({ id }) => id));
+  for (const metadata of snapshot.backupMetadata) {
     assertDomain(
-      goalIds.has(projection.goalId) &&
-        configurationIds.has(projection.configurationRevisionId),
+      metadata.rollbackBackupId === undefined ||
+        (metadata.rollbackBackupId !== metadata.id &&
+          backupIds.has(metadata.rollbackBackupId)),
       "SERIALIZATION_ERROR",
-      "Proyección huérfana.",
-      { projectionId: projection.id },
+      "Metadato de respaldo con relación inválida.",
+      { backupMetadataId: metadata.id },
     );
   }
-  for (const comparison of snapshot.comparisonResults) {
-    const projection = projectionsById.get(comparison.projectionResultId);
-    assertDomain(
-      projection !== undefined &&
-        projection.goalId === comparison.goalId &&
-        (comparison.actualCloseId === undefined ||
-          closeIds.has(comparison.actualCloseId)),
-      "SERIALIZATION_ERROR",
-      "Comparación huérfana.",
-      { comparisonId: comparison.id },
-    );
-  }
+  assertDomain(
+    snapshot.settings.schemaVersion === snapshot.schemaVersion,
+    "SERIALIZATION_ERROR",
+    "La versión de preferencias no coincide con el snapshot.",
+  );
   validateRateEquivalences(
     snapshot,
     rateEquivalenceTolerance,

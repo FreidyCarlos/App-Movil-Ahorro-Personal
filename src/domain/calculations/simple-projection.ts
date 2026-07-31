@@ -98,7 +98,6 @@ export function toSimpleProjectionConfiguration(
     periodicity: calculation.periodicity,
     numberOfPeriods: calculation.numberOfPeriods,
     ...(calculation.startDate === undefined ? {} : { startDate: calculation.startDate }),
-    projectedTotal: calculation.projectedTotal,
     calculationMethod: calculation.calculationMethod,
   };
 }

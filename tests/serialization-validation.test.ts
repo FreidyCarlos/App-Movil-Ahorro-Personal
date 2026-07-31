@@ -4,10 +4,7 @@ import {
   DomainError,
   type DomainSnapshotV1,
   appSettingsSchema,
-  calculateSimpleProjection,
-  compareProjectionWithActual,
   createActualPeriodClose,
-  createSimpleProjectionResult,
   domainSnapshotV1Schema,
   interestRateDefinitionSchema,
   savingsMovementSchema,
@@ -88,7 +85,6 @@ function validSnapshot(): DomainSnapshotV1 {
         periodicAmount: "100000",
         periodicity: "MONTHLY" as const,
         numberOfPeriods: 12,
-        projectedTotal: "1200000",
         calculationMethod: "SIMPLE_UNIFORM_SUM_V1" as const,
       },
     ],
@@ -100,8 +96,6 @@ function validSnapshot(): DomainSnapshotV1 {
     movements: [],
     movementRevisions: [],
     closes: [],
-    projectionResults: [],
-    comparisonResults: [],
     backupMetadata: [],
     settings: {
       id: id(4),
@@ -438,7 +432,7 @@ describe("serialización versionada", () => {
     ).toThrowError(expect.objectContaining({ code: "SERIALIZATION_ERROR" }));
   });
 
-  it("rechaza cierres, proyecciones y comparaciones con referencias inválidas", () => {
+  it("rechaza cierres con referencias inválidas", () => {
     const orphanClose = validSnapshot();
     orphanClose.closes.push({
       ...createActualPeriodClose("0", [], {
@@ -455,80 +449,17 @@ describe("serialización versionada", () => {
       expect.objectContaining({ code: "SERIALIZATION_ERROR" }),
     );
 
-    const orphanProjection = validSnapshot();
-    const projection = createSimpleProjectionResult(
-      calculateSimpleProjection({
-        periodicAmount: "100",
-        periodicity: "MONTHLY",
-        numberOfPeriods: 1,
-        startDate: "2026-01-01",
-      }),
-      {
-        id: id(730),
-        goalId: id(1),
-        configurationRevisionId: id(2),
-        cutoffDate: "2026-01-01",
-        calculatedAt: NOW,
-      },
-    );
-    orphanProjection.projectionResults.push(
-      snapshotValue<DomainSnapshotV1["projectionResults"][number]>({
-        ...projection,
-        configurationRevisionId: id(999),
-      }),
-    );
-    expect(() => validateDomainSnapshot(orphanProjection, LIMITS)).toThrowError(
-      expect.objectContaining({ code: "SERIALIZATION_ERROR" }),
-    );
+  });
 
-    const orphanComparison = validSnapshot();
-    const validProjection = createSimpleProjectionResult(
-      calculateSimpleProjection({
-        periodicAmount: "100",
-        periodicity: "MONTHLY",
-        numberOfPeriods: 1,
-        startDate: "2026-01-01",
-      }),
-      {
-        id: id(731),
-        goalId: id(1),
-        configurationRevisionId: id(2),
-        cutoffDate: "2026-01-01",
-        calculatedAt: NOW,
-      },
-    );
-    orphanComparison.projectionResults.push(
-      snapshotValue<DomainSnapshotV1["projectionResults"][number]>(
-        validProjection,
-      ),
-    );
-    const comparison = compareProjectionWithActual({
-      id: id(732),
-      goalId: id(1),
-      projection: validProjection,
-      actual: {
-        openingBalance: "0",
-        contributions: "100",
-        extraContributions: "0",
-        withdrawals: "0",
-        actualYield: "0",
-        adjustments: "0",
-        closingBalance: "100",
-        movementIds: [],
-      },
-      cutoffDate: "2026-02-01",
-      onTrackTolerance: "0",
-      calculatedAt: NOW,
-    });
-    orphanComparison.comparisonResults.push(
-      snapshotValue<DomainSnapshotV1["comparisonResults"][number]>({
-        ...comparison,
-        projectionResultId: id(999),
-      }),
-    );
-    expect(() =>
-      validateDomainSnapshot(orphanComparison, LIMITS),
-    ).toThrowError(expect.objectContaining({ code: "SERIALIZATION_ERROR" }));
+  it("rechaza resultados derivados dentro del snapshot persistente", () => {
+    for (const derivedField of ["projectionResults", "comparisonResults"]) {
+      expect(() =>
+        validateDomainSnapshot(
+          { ...validSnapshot(), [derivedField]: [] },
+          LIMITS,
+        ),
+      ).toThrowError(expect.objectContaining({ code: "SERIALIZATION_ERROR" }));
+    }
   });
 
   it("aplica límites de cantidad después de validar el esquema", () => {

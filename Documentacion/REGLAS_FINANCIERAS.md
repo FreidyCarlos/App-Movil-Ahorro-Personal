@@ -356,9 +356,9 @@ reutilizar movimientos reales.
 
 ## RF-16 — Proyección original, real y actualizada
 
-- **Proyección original:** resultado inmutable asociado a una revisión de
-  configuración. Una edición crea una revisión nueva; no reescribe el
-  resultado histórico.
+- **Proyección original:** resultado reproducible asociado a una revisión
+  inmutable de configuración. Una edición crea una revisión nueva. El resultado
+  se recalcula con el motor vigente y no se persiste como fuente de verdad.
 - **Ahorro real:** RF-14, basado solo en movimientos confirmados.
 - **Último cierre real válido:** cierre no anulado, cuyo hash de movimientos y
   revisión coinciden con el libro vigente.
@@ -368,10 +368,10 @@ reutilizar movimientos reales.
 - **Prevalencia:** un `YIELD` real sustituye la explicación estimada de ese
   periodo, pero no altera la tasa histórica guardada.
 
-La proyección simple conserva su resultado original, pero no exige libro real,
-cierres, proyección actualizada ni comparación. Esas capacidades aparecen al
-activar `ADVANCED`; los periodos simples previos siguen siendo planificados, no
-movimientos confirmados.
+La proyección simple conserva su configuración original, pero no exige libro
+real, cierres, proyección actualizada ni comparación. Esas capacidades aparecen
+al activar `ADVANCED`; los periodos simples previos siguen siendo planificados,
+no movimientos confirmados.
 
 Pruebas: edición de configuración; cierre válido/inválido; movimiento
 retroactivo; tasa futura; rendimiento real distinto; ausencia de cierre.

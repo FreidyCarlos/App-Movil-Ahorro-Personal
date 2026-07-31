@@ -33,9 +33,8 @@ silenciosamente al implementar.
 
 ## Decisiones técnicas cerradas al finalizar la Fase 2
 
-Estas políticas quedan propuestas como valores seguros del MVP y ya tienen
-implementación y pruebas. Permanecen sujetas a la revisión del responsable del
-producto antes del commit.
+Estas políticas fueron aprobadas por el responsable del producto, implementadas,
+probadas y publicadas en el cierre de Fase 2.
 
 ### DC-01 — Límite de montos COP
 
@@ -156,21 +155,50 @@ explícitamente días reales/365. `PRODUCT_DEFINED` bloquea hasta tener una regl
 Riesgo: real/real y 30/360 tienen variantes internacionales; se usarán códigos
 sin ambigüedad y no se inferirán por la frase genérica “base 360”.
 
-### DP-08 — Tamaño y profundidad de copia
+## Decisiones técnicas cerradas en Fase 3
 
-Propuesta inicial: máximo 10 MiB, profundidad 20, 100 metas, 10 000 movimientos
-por meta, 1000 periodos de tasa y strings de máximo 2000 caracteres salvo
-campos documentados.
+### DC-07 — Tamaño y profundidad de copia
 
-Riesgo: debe medirse en dispositivos de gama baja antes de aprobar. El límite
-se comprueba antes del parseo y nuevamente durante validación.
+Se implementaron techos operativos conservadores de 10 MiB, profundidad 20,
+100 metas, 10.000 movimientos totales, 1.000 periodos de tasa y longitudes
+cerradas por esquema.
 
-### DP-09 — Conservación de resultados derivados
+Estos límites se mantienen provisionalmente. Deben medirse en Android de gama
+baja antes de aprobarlos o reducirlos. El límite se comprueba antes de
+leer/parsear y nuevamente durante validación.
 
-Propuesta: guardar cierres y metadatos de resultados; recalcular proyecciones
-cuando cambie el motor, conservando `inputDigest` y versión previa.
+### DC-08 — Conservación de resultados derivados
 
-Riesgo: guardar cada punto consume espacio; no guardarlo dificulta auditoría.
+Proyecciones y comparaciones son resultados transitorios y no son fuente de
+verdad. SQLite y la copia portable persisten datos base, revisiones,
+configuración y metadatos necesarios para recalcularlos con el motor vigente.
+
+La trazabilidad recae en las entradas originales, sus revisiones, reglas y
+versiones. Los cierres reales se conservan como consolidaciones auditables, pero
+los movimientos y sus revisiones prevalecen; un cambio retroactivo vuelve
+obsoleto el cierre afectado.
+
+Si una versión futura añade caché de proyecciones o comparaciones, cada entrada
+deberá incluir versión del motor y huella de entradas. La caché debe poder
+eliminarse completamente sin perder datos ni impedir el recálculo.
+
+- SQLite usa un esquema híbrido: columnas relacionales e indexables más la
+  carga JSON estricta de cada entidad.
+- Montos y tasas permanecen como strings decimales; no se almacenan en `REAL`.
+- `application_id`, `user_version`, historial y huellas identifican la base.
+- Claves foráneas se activan y comprueban en cada conexión.
+- Las migraciones y reemplazos usan transacciones exclusivas y verificación
+  previa al `COMMIT`.
+- El MVP importa únicamente por reemplazo completo; no combina historiales.
+- La combinación automática de historiales queda fuera del MVP.
+- Se crea un respaldo portable antes de reemplazar un estado existente.
+- SHA-256 detecta daño de una copia, pero no es firma ni autenticación.
+- El caso de uso depende de puertos. Node se usa para integración y Expo se
+  conectará sin modificar dominio o aplicación.
+- Una base vacía admite una primera importación sin crear un respaldo vacío
+  ficticio.
+- Proyecciones y comparaciones no se almacenan ni se exportan; se recalculan con
+  el motor vigente.
 
 ### DP-10 — Soporte exacto de plazo fijo
 

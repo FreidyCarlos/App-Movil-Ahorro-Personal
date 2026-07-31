@@ -78,7 +78,7 @@ describe("proyección simple uniforme", () => {
       cutoffDate: "2026-01-01",
       calculatedAt: NOW,
     });
-    expect(configuration.projectedTotal).toBe("21");
+    expect("projectedTotal" in configuration).toBe(false);
     expect(projection.projectionMode).toBe("SIMPLE");
     expect(projection.ratePeriodIds).toEqual([]);
     expect(projection.projectedYield).toBe("0");

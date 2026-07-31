@@ -52,6 +52,8 @@ Fecha: 30 de julio de 2026.
   ambigüedad.
 - La combinación automática de copias queda fuera; el MVP reemplaza el conjunto
   completo.
+- Proyecciones y comparaciones no se conservan como historial: se recalculan con
+  el motor vigente. Una futura caché deberá ser descartable y estar versionada.
 - No hay cuenta, nube, sincronización entre dispositivos ni colaboración.
 
 ## Seguridad y privacidad
@@ -61,7 +63,7 @@ Fecha: 30 de julio de 2026.
   comprometido o respaldado por el sistema operativo.
 - Una copia compartida puede quedar en Descargas, correo, mensajería o nube;
   el usuario debe custodiarla.
-- El checksum futuro detectará cambios accidentales; no autentica al autor ni
+- El checksum SHA-256 detecta cambios accidentales; no autentica al autor ni
   impide manipulación.
 - PIN, bloqueo biométrico, SQLCipher y exclusión de respaldos del sistema son
   fases posteriores, no controles presentes.
@@ -83,8 +85,9 @@ Fecha: 30 de julio de 2026.
 - Una versión futura incompatible se rechazará; nunca se vaciará la base para
   “resolverla”.
 - El MVP no recupera copias eliminadas fuera de la aplicación.
-- Los límites exactos de archivo y registros están pendientes de pruebas de
-  dispositivo.
+- Los techos operativos actuales son 10 MiB, profundidad 20, 100 metas,
+  10.000 movimientos y 1.000 periodos de tasa. Siguen pendientes de medición
+  en un Android de gama baja; se mantienen provisionalmente mientras tanto.
 
 ## Plataforma
 
@@ -98,15 +101,20 @@ Fecha: 30 de julio de 2026.
 
 ## Estado actual
 
-La Fase 2 contiene un núcleo financiero TypeScript ejecutable y probado. No
-existen todavía:
+La Fase 3 contiene el núcleo financiero, un esquema SQLite v1, migraciones,
+repositorio transaccional y copias portables ejecutables y probados. No existen
+todavía:
 
 - aplicación React Native/Expo;
-- base SQLite ni migraciones;
-- selección, lectura o escritura de archivos de importación/exportación;
+- conexión ejecutada contra `expo-sqlite` en dispositivo;
+- selector o sistema de archivos móvil;
 - interfaz, pruebas de componentes ni E2E;
 - compilación o ejecución en emulador;
 - cifrado, biometría o PIN.
+
+Las pruebas reales de falta de espacio, cierre abrupto y selector móvil quedan
+asignadas a la Fase 4. El adaptador estructural `expo-sqlite` no se considera
+validado hasta ejecutarlo en un dispositivo.
 
 La capitalización mensual del núcleo solo admite una tasa única, meses
 calendario completos y ausencia de movimientos intermedios. Si el producto
@@ -117,9 +125,14 @@ El redondeo al peso `HALF_UP` es una política de presentación/consolidación d
 la aplicación, no la liquidación contractual de una entidad. El cálculo
 interno conserva decimales.
 
-El snapshot JSON de Fase 2 es una representación validada en memoria. No es aún
-el flujo portable seguro de Fase 3 y su huella no criptográfica no autentica una
-copia.
+El snapshot JSON se encapsula en una copia portable con SHA-256, vista previa,
+respaldo y reemplazo transaccional. SHA-256 detecta cambios, pero no autentica
+al autor ni cifra la copia.
+
+La integración SQLite real se prueba con el módulo incluido en Node 24.15. El
+adaptador estructural de Expo está implementado, pero su conexión a
+`expo-sqlite`, rendimiento, WAL y archivos deben verificarse en Android/iOS
+durante la Fase 4.
 
 ## Advertencia obligatoria
 

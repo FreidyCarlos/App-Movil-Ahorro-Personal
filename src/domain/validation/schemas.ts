@@ -71,7 +71,6 @@ export const simpleProjectionConfigurationSchema = z
     periodicity: z.enum(["MONTHLY", "YEARLY"]),
     numberOfPeriods: z.number().int().positive(),
     startDate: civilDateSchema.optional(),
-    projectedTotal: decimalSchema,
     calculationMethod: z.literal("SIMPLE_UNIFORM_SUM_V1"),
   })
   .strict()
@@ -89,16 +88,6 @@ export const simpleProjectionConfigurationSchema = z
         code: "custom",
         path: ["periodicAmount"],
         message: "El aporte periódico debe ser mayor que cero.",
-      });
-    }
-    const expectedTotal = new Decimal(value.periodicAmount)
-      .times(value.numberOfPeriods)
-      .toFixed();
-    if (!new Decimal(expectedTotal).equals(value.projectedTotal)) {
-      context.addIssue({
-        code: "custom",
-        path: ["projectedTotal"],
-        message: "El total derivado no coincide con las entradas simples.",
       });
     }
   });
@@ -439,15 +428,42 @@ export const backupMetadataSchema = z
     appVersion: z.string().min(1).max(80),
     rulesVersion: z.string().min(1).max(80),
     createdAt: utcInstantSchema,
+    exportedAt: utcInstantSchema.optional(),
+    importedAt: utcInstantSchema.optional(),
     fileSizeBytes: z.number().int().nonnegative(),
     checksumAlgorithm: z.literal("SHA-256"),
-    checksum: z.string().min(1).max(200),
+    checksum: z.string().regex(/^[a-f0-9]{64}$/),
     goalCount: z.number().int().nonnegative(),
     movementCount: z.number().int().nonnegative(),
+    dateRangeStart: civilDateSchema.optional(),
+    dateRangeEnd: civilDateSchema.optional(),
+    sourceDeviceId: uuidSchema.optional(),
     sourceFileName: z.string().max(255).optional(),
     result: z.enum(["SUCCESS", "FAILED"]),
+    resultCode: z.string().min(1).max(80).optional(),
+    rollbackBackupId: uuidSchema.optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    if (
+      value.dateRangeStart !== undefined &&
+      value.dateRangeEnd !== undefined &&
+      value.dateRangeEnd < value.dateRangeStart
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["dateRangeEnd"],
+        message: "El final del rango no puede preceder su inicio.",
+      });
+    }
+    if (value.result === "FAILED" && value.resultCode === undefined) {
+      context.addIssue({
+        code: "custom",
+        path: ["resultCode"],
+        message: "Una operación fallida requiere un código seguro.",
+      });
+    }
+  });
 
 export const appSettingsSchema = z
   .object({

@@ -33,7 +33,6 @@ export interface SimpleProjectionConfiguration {
   readonly periodicity: SimplePeriodicity;
   readonly numberOfPeriods: number;
   readonly startDate?: CivilDate;
-  readonly projectedTotal: string;
   readonly calculationMethod: "SIMPLE_UNIFORM_SUM_V1";
 }
 
@@ -292,13 +291,20 @@ export interface BackupMetadata {
   readonly appVersion: string;
   readonly rulesVersion: string;
   readonly createdAt: UtcInstant;
+  readonly exportedAt?: UtcInstant;
+  readonly importedAt?: UtcInstant;
   readonly fileSizeBytes: number;
   readonly checksumAlgorithm: "SHA-256";
   readonly checksum: string;
   readonly goalCount: number;
   readonly movementCount: number;
+  readonly dateRangeStart?: CivilDate;
+  readonly dateRangeEnd?: CivilDate;
+  readonly sourceDeviceId?: Uuid;
   readonly sourceFileName?: string;
   readonly result: "SUCCESS" | "FAILED";
+  readonly resultCode?: string;
+  readonly rollbackBackupId?: Uuid;
 }
 
 export interface AppSettings {

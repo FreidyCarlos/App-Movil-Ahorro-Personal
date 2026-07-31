@@ -1,7 +1,7 @@
-# Modelo de datos conceptual
+# Modelo de datos
 
-Estado: diseño de Fase 1; no es una implementación TypeScript ni un esquema
-SQLite. Fecha: 30 de julio de 2026.
+Estado: contratos TypeScript y esquema SQLite v1 implementados. Fecha: 30 de
+julio de 2026.
 
 ## Principios
 
@@ -10,9 +10,10 @@ SQLite. Fecha: 30 de julio de 2026.
 - Importes y tasas como strings decimales canónicos.
 - Moneda ISO 4217; el MVP acepta `COP`.
 - Revisiones inmutables y eliminación lógica para conservar trazabilidad.
-- SQLite será la futura fuente única de verdad; las vistas calculadas no
-  reemplazan movimientos ni configuraciones.
-- Cada cálculo registra versión de reglas, entradas y precisión.
+- SQLite es la fuente única de verdad de la persistencia; las vistas calculadas
+  no reemplazan movimientos ni configuraciones.
+- Proyecciones y comparaciones se calculan en memoria con el motor vigente y no
+  se persisten.
 
 ## Relaciones
 
@@ -23,8 +24,8 @@ SavingsGoal 1 ── * YieldRatePeriod * ── 1 InterestRateDefinition
 SavingsGoal 1 ── 1 FinancialProductConfiguration (por revisión)
 SavingsGoal 1 ── * SavingsMovement 1 ── * MovementRevision
 SavingsGoal 1 ── * ActualPeriodClose
-SavingsPlanConfiguration 1 ── * ProjectionResult
-ProjectionResult + ActualPeriodClose ── * ComparisonResult
+SavingsPlanConfiguration + datos base ──> ProjectionResult (en memoria)
+ProjectionResult + movimientos/cierre ──> ComparisonResult (en memoria)
 BackupMetadata registra exportaciones/importaciones del conjunto
 AppSettings configura la aplicación, no los saldos
 ```
@@ -96,12 +97,10 @@ Objeto de configuración propiedad de una revisión:
 | `periodicity` | `MONTHLY` o `YEARLY` |
 | `numberOfPeriods` | entero positivo escrito libremente dentro del límite |
 | `startDate` | fecha civil opcional |
-| `projectedTotal` | derivado decimal, no editable |
 | `calculationMethod` | `SIMPLE_UNIFORM_SUM_V1` |
 
-`projectedTotal` se recalcula desde las entradas y puede persistirse en
-`ProjectionResult` con su `inputDigest`; no actúa como fuente de verdad
-independiente.
+`projectedTotal` se calcula desde las entradas y se entrega en el resultado en
+memoria; no forma parte de esta configuración persistente.
 
 `PlannedContributionOverride` no forma parte del esquema MVP. Queda reservado
 como posible extensión futura con `periodIndex` y `amount`, siempre como dato
@@ -223,7 +222,8 @@ reescriben silenciosamente.
 
 ### ProjectionResult
 
-Resultado derivado, reproducible y reemplazable.
+Resultado derivado, reproducible, transitorio y reemplazable. No forma parte del
+snapshot persistente ni de la copia portable; se recalcula con el motor vigente.
 
 Campos: `id`, `goalId`, `configurationRevisionId`, `projectionKind`
 (`ORIGINAL`, `UPDATED`), `cutoffDate`, `projectedEndDate`, `targetReachedDate`,
@@ -236,7 +236,7 @@ También conserva `projectionMode`. En `SIMPLE`, `projectedContributions` y
 `finalBalance` equivalen a la suma simple, `projectedYield` es cero/no
 aplicable, y no se crean referencias ficticias a tasa o producto.
 
-Nunca se marca como real.
+Nunca se marca como real ni se usa como fuente de verdad.
 
 ### ComparisonResult
 
@@ -244,6 +244,10 @@ Campos: `id`, `goalId`, `projectionResultId`, `actualCloseId` o corte real,
 `cutoffDate`, proyectado/real para aportes, retiros, rendimiento y saldo,
 diferencias por concepto, avance, estado de plazo, desglose por periodo,
 `inputDigest`, `rulesVersion`, `calculatedAt`.
+
+También es transitorio: se reconstruye desde la proyección vigente y el libro
+real. Una caché futura deberá incluir versión del motor y huella de entradas, y
+podrá descartarse sin pérdida.
 
 ### BackupMetadata
 
@@ -279,8 +283,12 @@ se modelará aparte y solo después de diseñar almacenamiento seguro.
 - movimientos y sus revisiones;
 - periodos y definiciones originales/equivalentes de tasa;
 - condiciones básicas del producto;
-- cierres, resultados reproducibles y versiones;
+- cierres auditables, versiones y huellas necesarias para recalcular;
 - preferencias no críticas y metadatos de respaldo/importación.
+
+No se almacenan `ProjectionResult` ni `ComparisonResult`. Los movimientos y sus
+revisiones son la fuente del ahorro real; un cierre solo consolida ese libro y
+puede quedar `STALE`.
 
 ## Datos que nunca deben almacenarse
 
@@ -292,25 +300,51 @@ se modelará aparte y solo después de diseñar almacenamiento seguro.
 - datos obtenidos de bancos sin una integración futura autorizada;
 - estado financiero completo en logs o analítica.
 
-## Integridad y migraciones futuras
+## Correspondencia SQLite v1
 
-- tabla de versión de esquema desde la primera migración;
-- claves foráneas y restricciones activas;
-- escritura crítica en transacción;
+| Entidad | Tabla |
+|---|---|
+| `SavingsGoal` | `goals` |
+| `SavingsPlanConfiguration` | `plan_configurations` |
+| `SimpleProjectionConfiguration` | `simple_configurations` |
+| `InterestRateDefinition` | `rate_definitions` |
+| `YieldRatePeriod` | `rate_periods` |
+| `FinancialProductConfiguration` | `product_configurations` |
+| `SavingsMovement` | `movements` |
+| `MovementRevision` | `movement_revisions` |
+| `ActualPeriodClose` | `actual_period_closes` |
+| `BackupMetadata` | `backup_metadata` |
+| `AppSettings` | `app_settings` |
+
+Cada fila contiene columnas relacionales e indexables junto con `payload_json`.
+Los decimales permanecen como strings; no se almacenan en columnas
+binarias `REAL`. Al leer, se valida tanto la carga individual como el snapshot
+completo y sus relaciones.
+
+La duplicación controlada entre columnas e `payload_json` sirve para consultar
+y aplicar restricciones sin perder el objeto original. Todo reemplazo vuelve a
+leer y comparar el snapshot antes de confirmar la transacción.
+
+## Integridad y migraciones
+
+- `application_id`, `user_version`, `schema_migrations` y `app_metadata` desde
+  la primera migración;
+- claves foráneas activas y comprobadas por conexión;
+- escritura crítica en transacción exclusiva;
 - consultas parametrizadas;
-- prueba de integridad antes de migrar/importar;
+- `quick_check` y `foreign_key_check` antes y después de migrar;
 - nunca borrar o reinicializar automáticamente una base incompatible;
 - conservar archivo dañado, bloquear operaciones peligrosas y ofrecer
   exportación/recuperación;
 - migraciones ascendentes verificables y respaldo previo;
 - una versión futura desconocida se rechaza sin modificar datos.
 
-## Importación futura
+## Importación
 
-El JSON será cerrado y versionado. Antes de parsear se validarán tipo y tamaño;
+El JSON es cerrado y versionado. Antes de parsear se validan tipo y tamaño;
 después, profundidad, longitudes, claves, tipos, IDs, relaciones y números
-decimales finitos. El reemplazo completo se hará con respaldo, confirmación,
-transacción, verificación y restauración si falla.
+decimales finitos. El reemplazo completo usa respaldo, confirmación,
+transacción, verificación y rollback.
 
 No se implementa una migración histórica de archivos sin `projectionMode`
 mientras no existan copias móviles productivas anteriores. Para una futura
@@ -318,21 +352,25 @@ versión heredada conocida, la migración asignará `ADVANCED` solo si hay datos
 financieros avanzados completos y válidos, `SIMPLE` solo si hay campos simples
 válidos, y rechazará archivos ambiguos sin modificar datos.
 
-Los límites concretos de archivo permanecen en
-[`DECISIONES_PENDIENTES.md`](DECISIONES_PENDIENTES.md).
+Los techos operativos de desarrollo son 10 MiB, profundidad 20, 100 metas,
+10.000 movimientos y 1.000 periodos de tasa. Su calibración final en Android
+permanece en [`DECISIONES_PENDIENTES.md`](DECISIONES_PENDIENTES.md).
 
-## Correspondencia con la implementación de Fase 2
+## Correspondencia con la implementación
 
 Las entidades conceptuales tienen contratos TypeScript en
 `src/domain/models.ts`. Los objetos importables se validan con esquemas Zod
 cerrados en `src/domain/validation/schemas.ts`.
 
-La implementación no es todavía un esquema SQLite. Identificadores,
-relaciones, revisión activa, referencias de tasas y resultados se validan en el
-snapshot de dominio v1, pero su atomicidad y unicidad persistida se implementará
-en la Fase 3.
+Identificadores, relaciones, revisión activa, referencias de tasas y resultados
+se validan en el snapshot v1. SQLite añade atomicidad, claves foráneas,
+unicidad, índices y recuperación por rollback.
 
 `projectionMode`, valor/tipo original de tasa, equivalencia, versión de reglas,
 movimientos, revisiones, cierres y huellas forman parte del contrato
 serializable. Un archivo heredado sin `projectionMode` no se migra en esta
 versión: se rechaza por esquema.
+
+Detalles físicos y recuperación:
+[MIGRACIONES.md](MIGRACIONES.md) y
+[RESPALDOS_E_IMPORTACION.md](RESPALDOS_E_IMPORTACION.md).

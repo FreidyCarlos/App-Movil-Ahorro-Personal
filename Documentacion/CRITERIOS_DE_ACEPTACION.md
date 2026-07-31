@@ -93,9 +93,9 @@ Fase 1 solo se valida que estén documentados.
 - **CA-039:** un movimiento retroactivo invalida cierres afectados.
 - **CA-040:** la comparación usa la misma fecha de corte para ambos lados.
 
-## Persistencia y respaldo futuros
+## Persistencia y respaldo
 
-- **CA-050:** SQLite será la única fuente de verdad financiera; una preferencia
+- **CA-050:** SQLite es la única fuente de verdad financiera; una preferencia
   visual puede usar almacenamiento no crítico.
 - **CA-051:** los datos sobreviven cierre/reinicio sin conexión.
 - **CA-052:** existe versión de esquema y migración desde la primera entrega.
@@ -112,8 +112,23 @@ Fase 1 solo se valida que estén documentados.
 - **CA-059:** versión futura se rechaza; antigua soportada se migra.
 - **CA-060:** el checksum se describe como detector de daño, no autenticidad.
 - **CA-061:** el MVP no combina historiales automáticamente.
+- **CA-062:** proyecciones y comparaciones no son fuente de verdad ni forman
+  parte de SQLite o de la copia portable; se recalculan con el motor vigente.
+- **CA-063:** una caché futura incluye versión del motor, valida su huella y
+  puede descartarse sin pérdida.
 
-## Seguridad y privacidad futuras
+Evidencia de Fase 3:
+
+- CA-050 y CA-052 a CA-061 están implementados en la capa independiente y
+  probados con SQLite/archivos temporales reales.
+- CA-051 está comprobado mediante cierre y reapertura en Node. Permanece
+  pendiente repetirlo con `expo-sqlite` en Android, por lo que no se declara
+  finalizado para el MVP móvil.
+- La falta de espacio se simula en el puerto de archivos. Su comportamiento
+  real, el cierre abrupto y el selector móvil corresponden a la Fase 4.
+- El adaptador `expo-sqlite` sigue sin validación en dispositivo.
+
+## Seguridad y privacidad
 
 - **CA-070:** no usa `eval`, ejecución dinámica, contenido ejecutable importado
   ni WebView sin justificación.
@@ -128,6 +143,10 @@ Fase 1 solo se valida que estén documentados.
 - **CA-077:** documentación declara SQLite/JSON sin cifrado inicial.
 - **CA-078:** biometría/PIN/cifrado no se presentan como controles ya
   implementados.
+
+En Fase 3 se verificaron consultas parametrizadas, transacciones, errores
+seguros, archivos limitados y ausencia de secretos. La revisión de logs,
+permisos y compilación móvil corresponde a Fases 4 y 5.
 
 ## Experiencia y accesibilidad futuras
 
