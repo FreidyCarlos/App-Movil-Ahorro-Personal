@@ -2,8 +2,9 @@
 
 Fecha: 1 de agosto de 2026. Estado: pruebas unitarias e integración ejecutadas;
 diagnóstico físico sin reproducción del fallo nativo y pruebas funcionales
-agrupadas aprobadas en Android 9 y Android 16. La validación de Fase 5 reutilizó
-el development APK de Fase 4 sin generar otro build.
+agrupadas aprobadas en Android 9 y Android 16. La validación complementaria
+posterior al cierre de Fase 4 reutilizó el development APK sin generar otro
+build.
 
 ## Herramientas
 
@@ -204,9 +205,10 @@ dejó nuevamente `MetaPersistencia` como estado importado. Esto es el
 comportamiento previsto de importación por reemplazo, no pérdida inesperada.
 El `SIGSEGV` permanece como fallo histórico no reproducido y la anomalía de
 `SplashScreenManager` permanece no fatal y documentada. Android moderno quedó
-pendiente en ese cierre del Moto X4 y se validó después en la Fase 5.
+pendiente en ese cierre del Moto X4 y se validó después como evidencia
+complementaria de Fase 4.
 
-## Fase 5 — validación en Android moderno
+## Validación complementaria de Fase 4 — Android moderno
 
 Consulta: 1 de agosto de 2026. Se usó un Motorola moto g75 5G de uso diario con
 Android 16, API 36 y ABI ARM64, sin registrar ni publicar su número de serie. La
@@ -261,7 +263,7 @@ específicas y puente USB. La evidencia local se conserva ignorada por Git. Una
 captura que incluyó el teclado del sistema se eliminó inmediatamente tanto del
 teléfono como del equipo y no se conserva.
 
-### APK `preview` autónomo interno
+### APK `preview` autónomo interno — evidencia complementaria
 
 Consulta: 1 de agosto de 2026. Después del cierre documental anterior se generó
 un único APK EAS con el perfil `preview`, `developmentClient: false` y
@@ -298,6 +300,10 @@ y sin depender de Metro o del enlace USB para ejecutar el producto. Queda
 aprobado como compilación autónoma interna. Esta prueba no cubre AAB,
 distribución, actualización sobre una instalación con otra firma, iOS,
 accesibilidad ni recursos y rendimiento.
+
+Esta evidencia no completa la Fase 5 canónica del proyecto. La Fase 5 comienza
+con la revisión sistemática de seguridad y robustez definida por el prompt
+madre; no requiere generar otro build para iniciar.
 
 ## Suite de Fase 2
 
@@ -402,27 +408,33 @@ concentran en corrupción o pérdida de datos.
 
 ## Pendiente por fase
 
-### Fase 5 y posteriores
+### Fase 5 — Seguridad y robustez
 
-- formularios, navegación, estados vacíos y errores de almacenamiento;
-- datos provenientes de repositorios reales.
-- autorizar por separado un binario Android de producción y su prueba de
-  arranque autónomo antes de tratarlo como entregable distribuible;
-- medir límites grandes de importación y uso de recursos en Android de gama
-  baja;
-- ejecutar falta de espacio real solo con autorización específica;
-- comprobar actualización y reinstalación en una sesión que permita modificar
-  la instalación;
-- capturar únicamente logs filtrados por aplicación/PID y verificar que no
-  expongan datos financieros;
-- solicitar autorización antes de desinstalar, limpiar datos o provocar
-  deliberadamente falta de espacio.
+- actualizar el análisis de dependencias y revisar hallazgos transitivos;
+- revisar permisos, almacenamiento local, política de respaldos y logs;
+- probar archivos manipulados, tamaños, profundidad, claves desconocidas y
+  entradas maliciosas sin ejecutar contenido;
+- comprobar límites y recuperación ante corrupción, importación fallida y
+  escrituras interrumpidas con pruebas seguras y proporcionadas;
+- actualizar el modelo de amenazas con la evidencia confirmada;
+- reutilizar las pruebas ya válidas de logs, persistencia y JSON inválido sin
+  repetir pruebas físicas innecesarias;
+- solicitar autorización específica antes de provocar falta real de espacio,
+  borrar datos, desinstalar o modificar la instalación cotidiana.
 
-### Fases 5 a 7
+### Fase 6 — Validación visual y accesibilidad
 
-- archivos maliciosos y límites medidos en dispositivo;
-- revisión de logs, permisos, compilación y dependencias;
-- accesibilidad, pantallas pequeñas y reducción de movimiento;
-- flujos E2E y ejecución Android de producción.
+- pantallas pequeñas, claro/oscuro, texto aumentado y orientación admitida;
+- lector de pantalla, teclado, navegación táctil, contraste y reducción de
+  movimiento;
+- estados vacíos, errores y confirmaciones destructivas.
+
+### Fase 7 — Validación funcional completa
+
+- componentes, integración, migraciones y flujos E2E completos;
+- exportación e importación equivalentes de extremo a extremo;
+- compilación de producción y ejecución Android autorizada;
+- actualización o reinstalación conservando datos cuando exista autorización;
+- auditoría final de dependencias y criterios de aceptación del MVP.
 
 No se declarará aprobado ninguno de estos grupos hasta ejecutarlo en su fase.

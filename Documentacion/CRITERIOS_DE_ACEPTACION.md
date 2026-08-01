@@ -1,8 +1,9 @@
 # Criterios de aceptación
 
 Fecha: 1 de agosto de 2026. Estos criterios definen el resultado del MVP; la
-evidencia móvil disponible alcanza hasta el recorrido básico de Fase 5 con un
-development APK y un APK `preview` autónomo interno en Android 16.
+evidencia móvil disponible alcanza el cierre complementario de Fase 4 con un
+development APK y un APK `preview` autónomo interno en Android 16. La Fase 5
+canónica de seguridad y robustez continúa pendiente.
 
 ## Producto y metas
 
@@ -118,7 +119,7 @@ development APK y un APK `preview` autónomo interno en Android 16.
 - **CA-063:** una caché futura incluye versión del motor, valida su huella y
   puede descartarse sin pérdida.
 
-Evidencia de Fases 3 a 5:
+Evidencia de Fases 3 y 4 y validación móvil complementaria:
 
 - CA-050 y CA-052 a CA-061 están implementados en la capa independiente y
   probados con SQLite/archivos temporales reales.
@@ -149,9 +150,10 @@ Evidencia de Fases 3 a 5:
 
 En Fase 3 se verificaron consultas parametrizadas, transacciones, errores
 seguros, archivos limitados y ausencia de secretos. Fase 4 añadió logs
-filtrados por proceso y un development build. Fase 5 añadió un APK `preview`
-autónomo interno sin Metro; permisos y compilación de producción corresponden
-a revisiones posteriores.
+filtrados por proceso y un development build. La validación complementaria
+añadió un APK `preview` autónomo interno sin Metro. La revisión sistemática de
+seguridad y robustez corresponde a Fase 5; la compilación de producción, a
+Fase 7.
 
 ## Experiencia y accesibilidad futuras
 
@@ -226,14 +228,15 @@ válida, rechazo de archivo inválido y funcionamiento sin internet. En Android
 16 la importación válida creó la copia automática previa y el archivo inválido
 se rechazó antes de la vista previa sin alterar los datos.
 
-El primer `Failed to open app` de Fase 5 fue una respuesta HTTP 500 de Metro
-causada por una configuración de red inválida en el proceso host. El mismo APK
+El primer `Failed to open app` de la validación complementaria en Android 16
+fue una respuesta HTTP 500 de Metro causada por una configuración de red
+inválida en el proceso host. El mismo APK
 abrió al reiniciar Metro con un entorno limpio, por lo que no se demostró una causa
 nativa ni se generó otro build. Siguen pendientes, entre otros criterios del
 MVP completo, la interfaz avanzada, accesibilidad con tecnología asistiva y la
 compilación de producción.
 
-## Evidencia adicional de Fase 5 — APK autónomo interno
+## Evidencia adicional de Fase 4 — APK autónomo interno
 
 El APK EAS `preview`, versión `0.1.0` y `versionCode 8`, abrió directamente el
 producto en Android 16 con Wi-Fi y datos móviles desactivados, Metro cerrado,
@@ -247,3 +250,8 @@ No se registraron `SIGSEGV`, errores fatales ni `SplashScreenManager` en los
 logs limitados al proceso. El resultado aprueba esta compilación como APK
 autónomo interno, pero no satisface por sí solo CA-076 ni valida una compilación
 de producción, AAB, distribución o iOS.
+
+Esta evidencia tampoco cierra la Fase 5 canónica. Antes de avanzar a validación
+visual o producción deben completarse el análisis de dependencias, permisos,
+logs, archivos manipulados, límites, almacenamiento, modelo de amenazas y
+recuperación definidos para Seguridad y robustez.

@@ -26,8 +26,9 @@ una prueba funcional agrupada posterior no reprodujeron el fallo; `Continue`
 no mostró relación causal. En el dispositivo se validaron el esquema SQLite v1,
 la creación y persistencia de una meta tras cierre forzado, la proyección, la
 exportación, la importación válida, el rechazo de un archivo inválido y el flujo
-sin internet. La causa del evento original permanece indeterminada. La Fase 5
-repitió el recorrido agrupado con el mismo development APK en Android 16/API 36.
+sin internet. La causa del evento original permanece indeterminada. Una
+validación complementaria posterior al cierre de Fase 4 repitió el recorrido
+agrupado con el mismo development APK en Android 16/API 36.
 El primer `Failed to open app` se aisló a una configuración de red inválida
 heredada por Metro, que devolvía HTTP 500 al solicitar el manifiesto. Al
 reiniciar solo Metro con un entorno limpio, el producto abrió y aprobó meta
@@ -47,6 +48,12 @@ herramientas de desarrollo, y los logs limitados al proceso no registraron
 `SIGSEGV`, errores fatales ni `SplashScreenManager`. Esta evidencia aprueba el
 APK como compilación autónoma interna; no equivale todavía a una compilación de
 producción ni a autorización de distribución.
+
+Estas validaciones físicas complementan el cierre de la aplicación móvil, pero
+no completan la Fase 5 canónica. El siguiente hito es **Seguridad y robustez**:
+dependencias, permisos, logs, archivos manipulados, límites, almacenamiento,
+modelo de amenazas y recuperación. La validación visual corresponde a Fase 6 y
+la validación funcional completa con compilación de producción, a Fase 7.
 
 El entrypoint móvil de entrega es `expo-router/entry` y usa las rutas de
 `src/app`. Los entrypoints creados exclusivamente para aislar V1–V6 fueron
