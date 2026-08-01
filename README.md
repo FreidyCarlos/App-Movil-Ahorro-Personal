@@ -25,8 +25,15 @@ una prueba funcional agrupada posterior no reprodujeron el fallo; `Continue`
 no mostró relación causal. En el dispositivo se validaron el esquema SQLite v1,
 la creación y persistencia de una meta tras cierre forzado, la proyección, la
 exportación, la importación válida, el rechazo de un archivo inválido y el flujo
-sin internet. La causa del evento original permanece indeterminada y aún falta
-repetir la compatibilidad en un Android moderno.
+sin internet. La causa del evento original permanece indeterminada. La Fase 5
+repitió el recorrido agrupado con el mismo development APK en Android 16/API 36.
+El primer `Failed to open app` se aisló a una configuración de red inválida
+heredada por Metro, que devolvía HTTP 500 al solicitar el manifiesto. Al
+reiniciar solo Metro con un entorno limpio, el producto abrió y aprobó meta
+simple, proyección,
+persistencia, exportación, importación válida, rechazo seguro de JSON inválido,
+funcionamiento sin internet y estabilidad sin señales fatales. No se generó
+otro APK ni se cambiaron dependencias o arquitectura.
 
 El entrypoint móvil de entrega es `expo-router/entry` y usa las rutas de
 `src/app`. Los entrypoints creados exclusivamente para aislar V1–V6 fueron

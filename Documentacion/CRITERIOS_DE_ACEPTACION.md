@@ -1,7 +1,8 @@
 # Criterios de aceptación
 
-Fecha: 31 de julio de 2026. Estos criterios definen el resultado del MVP; la
-evidencia disponible alcanza hasta el recorrido móvil inicial de Fase 4.
+Fecha: 1 de agosto de 2026. Estos criterios definen el resultado del MVP; la
+evidencia móvil disponible alcanza hasta el recorrido básico de Fase 5 con un
+development APK en Android 16.
 
 ## Producto y metas
 
@@ -117,18 +118,18 @@ evidencia disponible alcanza hasta el recorrido móvil inicial de Fase 4.
 - **CA-063:** una caché futura incluye versión del motor, valida su huella y
   puede descartarse sin pérdida.
 
-Evidencia de Fases 3 y 4:
+Evidencia de Fases 3 a 5:
 
 - CA-050 y CA-052 a CA-061 están implementados en la capa independiente y
   probados con SQLite/archivos temporales reales.
 - CA-051 se comprobó mediante cierre y reapertura tanto en Node como con
-  `expo-sqlite` en Android 9.
+  `expo-sqlite` en Android 9 y Android 16.
 - El cierre forzado, selector, exportación, importación válida y rechazo de un
   archivo inválido se comprobaron en el Moto X4.
 - La falta de espacio solo se simula en el puerto de archivos; su comportamiento
   real permanece pendiente.
-- El adaptador `expo-sqlite` quedó validado para el recorrido básico, no para
-  límites de volumen, presión de memoria, Android moderno ni iOS.
+- El adaptador `expo-sqlite` quedó validado para el recorrido básico en Android
+  9 y Android 16, no para límites de volumen, presión de memoria ni iOS.
 
 ## Seguridad y privacidad
 
@@ -218,7 +219,15 @@ El cierre registró 124 pruebas aprobadas, typecheck portable y móvil, build,
 críticas. La auditoría conserva 11 hallazgos moderados transitivos de las
 herramientas Expo, sin una actualización compatible demostrada.
 
-El development APK y el entrypoint productivo se comprobaron en Android 9 con
-meta simple, persistencia, exportación e importación. Siguen pendientes, entre
-otros criterios del MVP completo, la interfaz avanzada, accesibilidad con
-tecnología asistiva, compilación de producción y Android moderno.
+El development APK y el entrypoint productivo se comprobaron en Android 9 y
+Android 16 con meta simple, proyección, persistencia, exportación, importación
+válida, rechazo de archivo inválido y funcionamiento sin internet. En Android
+16 la importación válida creó la copia automática previa y el archivo inválido
+se rechazó antes de la vista previa sin alterar los datos.
+
+El primer `Failed to open app` de Fase 5 fue una respuesta HTTP 500 de Metro
+causada por una configuración de red inválida en el proceso host. El mismo APK
+abrió al reiniciar Metro con un entorno limpio, por lo que no se demostró una causa
+nativa ni se generó otro build. Siguen pendientes, entre otros criterios del
+MVP completo, la interfaz avanzada, accesibilidad con tecnología asistiva y la
+compilación de producción.

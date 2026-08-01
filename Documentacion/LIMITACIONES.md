@@ -1,6 +1,6 @@
 # Limitaciones
 
-Fecha: 31 de julio de 2026.
+Fecha: 1 de agosto de 2026.
 
 ## Financieras
 
@@ -126,8 +126,17 @@ Fecha: 31 de julio de 2026.
   splash y el flujo continúa, por lo que no se modifica el APK sin impacto o
   corrección demostrable.
 - La prueba agrupada aprobó migración, lectura/escritura, persistencia,
-  exportación, importación válida e inválida, modo sin red y recuperación. La
-  compatibilidad definitiva aún requiere repetirla en un Android moderno.
+  exportación, importación válida e inválida, modo sin red y recuperación en
+  Android 9 y repitió el recorrido básico con éxito en Android 16/API 36.
+- El primer `Failed to open app` de Android 16 fue causado por una configuración
+  de red inválida heredada por Metro, que devolvía HTTP 500 al solicitar el
+  manifiesto. Al reiniciar solo Metro con un entorno limpio, el mismo APK abrió
+  el producto. No hubo causa nativa para otro build ni para cambios de
+  dependencias.
+- Sin internet, el development client no descubrió automáticamente Metro y fue
+  necesario elegir su entrada USB guardada. Después de esa selección el
+  producto funcionó con SQLite y los datos persistidos; esto no valida todavía
+  el arranque autónomo de un binario de producción.
 
 ## Estado actual
 
@@ -139,7 +148,7 @@ valida todavía:
 - límites máximos, rendimiento y presión de memoria;
 - falta real de espacio;
 - actualización o reinstalación conservando datos;
-- Android moderno, iOS, cifrado, biometría o PIN.
+- binario Android de producción, iOS, cifrado, biometría o PIN.
 
 La capitalización mensual del núcleo solo admite una tasa única, meses
 calendario completos y ausencia de movimientos intermedios. Si el producto
@@ -156,8 +165,8 @@ al autor ni cifra la copia.
 
 La integración SQLite real se prueba con el módulo incluido en Node 24.15. El
 adaptador estructural de Expo y su conexión a `expo-sqlite`, WAL y archivos se
-comprobaron en el recorrido básico de Android 9. Rendimiento, límites e iOS
-siguen pendientes.
+comprobaron en recorridos básicos de Android 9 y Android 16. Rendimiento,
+límites, binario de producción e iOS siguen pendientes.
 
 Expo Go no será criterio de aceptación. La estrategia recomendada usa un
 development build; EAS Build evita instalar herramientas nativas locales, pero

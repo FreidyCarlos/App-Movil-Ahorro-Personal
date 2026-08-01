@@ -1,8 +1,9 @@
 # Plan de pruebas
 
-Fecha: 31 de julio de 2026. Estado: pruebas unitarias e integración ejecutadas;
-diagnóstico físico sin reproducción del fallo nativo y prueba funcional
-agrupada de Fase 4 aprobada en Android 9.
+Fecha: 1 de agosto de 2026. Estado: pruebas unitarias e integración ejecutadas;
+diagnóstico físico sin reproducción del fallo nativo y pruebas funcionales
+agrupadas aprobadas en Android 9 y Android 16. La validación de Fase 5 reutilizó
+el development APK de Fase 4 sin generar otro build.
 
 ## Herramientas
 
@@ -202,8 +203,63 @@ La copia válida usada contenía la meta previa, por lo que el reemplazo final
 dejó nuevamente `MetaPersistencia` como estado importado. Esto es el
 comportamiento previsto de importación por reemplazo, no pérdida inesperada.
 El `SIGSEGV` permanece como fallo histórico no reproducido y la anomalía de
-`SplashScreenManager` permanece no fatal y documentada. Android moderno sigue
-pendiente sin bloquear el cierre de la comprobación en Moto X4.
+`SplashScreenManager` permanece no fatal y documentada. Android moderno quedó
+pendiente en ese cierre del Moto X4 y se validó después en la Fase 5.
+
+## Fase 5 — validación en Android moderno
+
+Consulta: 1 de agosto de 2026. Se usó un Motorola moto g75 5G de uso diario con
+Android 16, API 36 y ABI ARM64, sin registrar ni publicar su número de serie. La
+raíz Git estaba limpia y `main`, `HEAD` y `origin/main` coincidían con el commit
+de cierre de Fase 4 `c753375`.
+
+No se generó otro APK. El APK V6 conserva el mismo stack nativo, los mismos
+plugins y `versionCode 7`; el cierre productivo de Fase 4 ya lo había reutilizado
+con cambios exclusivamente JavaScript servidos por Metro. Se verificó su
+SHA-256 conocido y se instaló como paquete nuevo con `adb install -r`, sin
+desinstalar, borrar datos, conceder permisos globales ni cambiar la seguridad
+del dispositivo.
+
+Se propuso una única prueba agrupada: apertura productiva, meta simple,
+proyección, persistencia tras cierre forzado, exportación, importación válida,
+rechazo de archivo inválido, funcionamiento sin internet y estabilidad. El
+resultado fue:
+
+| Etapa | Resultado confirmado |
+|---|---|
+| Instalación del development APK | aprobada; paquete nuevo |
+| Metro y USB | Metro respondió por IPv4 local y `adb reverse` quedó configurado; no se documentaron direcciones ni identificadores del dispositivo |
+| Primer intento de apertura | `Failed to open app`; la solicitud del manifiesto devolvía HTTP 500 porque Metro heredó una configuración de red inválida del proceso host |
+| Corrección de entorno | se reinició únicamente Metro con el entorno saneado y en modo offline; el manifiesto respondió HTTP 200 y no se modificó el proyecto |
+| Apertura productiva y SQLite | aprobadas; se ejecutó `main` y se creó/abrió `ahorro-personal.db` |
+| Meta simple y proyección | aprobadas con datos sintéticos; el total y el rendimiento proyectado coincidieron con el resultado esperado |
+| Persistencia | aprobada tras cierre forzado y proceso nuevo; meta, importes, plazo y proyección permanecieron |
+| Exportación | aprobada; copia JSON completa con formato portable y checksum SHA-256 válido |
+| Importación válida | aprobada; vista previa de 1 meta, 0 movimientos y esquema 1; reemplazo confirmado con copia automática previa y datos íntegros |
+| Archivo inválido | rechazado antes de la vista previa por formato no portable; no reemplazó datos ni creó otra copia automática |
+| Sin internet | aprobada sin salida de red; el development client exigió seleccionar su servidor USB guardado y luego el producto abrió con SQLite, meta y proyección intactas |
+| Estabilidad | mismo proceso activo durante la observación final de 45 segundos y cero `SIGSEGV`, `Fatal signal`, `FATAL EXCEPTION` o `AndroidRuntime` en logs limitados al PID |
+
+El bloqueo inicial no era una incompatibilidad con Android 16 ni una causa
+nativa para regenerar el APK. Era una configuración de red del proceso host
+que afectaba la generación del manifiesto de desarrollo. No se cambiaron Expo,
+React Native, Hermes, dependencias ni arquitectura. El `SIGSEGV` histórico no
+reapareció y no se reabrió su diagnóstico.
+
+La prueba sin internet valida el producto y su almacenamiento local una vez
+cargado el bundle por USB. No convierte el development client en un binario
+autónomo: su pantalla inicial no descubrió Metro sin red y requirió elegir la
+entrada USB ya guardada. La autonomía de arranque de un APK de producción
+queda fuera de esta ejecución.
+
+Al cerrar la prueba se detuvieron solo la aplicación y Metro, se retiró
+`adb reverse` y se eliminaron los archivos temporales creados en la carpeta
+autorizada del teléfono. Después, con autorización explícita, se eliminaron los
+datos y cachés de prueba, se desinstaló el development APK y se retiró la
+carpeta vacía. Se verificó la ausencia del paquete, proceso, rutas externas
+específicas y puente USB. La evidencia local se conserva ignorada por Git. Una
+captura que incluyó el teclado del sistema se eliminó inmediatamente tanto del
+teléfono como del equipo y no se conserva.
 
 ## Suite de Fase 2
 
@@ -308,12 +364,12 @@ concentran en corrupción o pérdida de datos.
 
 ## Pendiente por fase
 
-### Fase 4
+### Fase 5 y posteriores
 
 - formularios, navegación, estados vacíos y errores de almacenamiento;
 - datos provenientes de repositorios reales.
-- repetir la prueba agrupada en un Android moderno antes de cerrar
-  compatibilidad;
+- autorizar por separado un binario Android de producción y su prueba de
+  arranque autónomo antes de tratarlo como entregable distribuible;
 - medir límites grandes de importación y uso de recursos en Android de gama
   baja;
 - ejecutar falta de espacio real solo con autorización específica;
