@@ -135,8 +135,16 @@ Fecha: 1 de agosto de 2026.
   dependencias.
 - Sin internet, el development client no descubrió automáticamente Metro y fue
   necesario elegir su entrada USB guardada. Después de esa selección el
-  producto funcionó con SQLite y los datos persistidos; esto no valida todavía
-  el arranque autónomo de un binario de producción.
+  producto funcionó con SQLite y los datos persistidos; esa ejecución aislada
+  no validaba el arranque autónomo.
+- Un APK EAS `preview`, versión `0.1.0` y `versionCode 8`, se validó después en
+  Android 16 como compilación autónoma interna. Abrió directamente con Wi-Fi y
+  datos móviles desactivados, Metro cerrado, 8081 libre y sin `adb reverse`;
+  aprobó el recorrido básico y no mostró herramientas de desarrollo.
+- La exportación del `preview` quedó confirmada hasta la generación de la copia
+  y su entrega al resolver de Android. La importación válida se comprobó con
+  una copia sintética compatible y checksum verificado, no como un roundtrip de
+  un archivo externo guardado desde esa misma exportación.
 
 ## Estado actual
 
@@ -148,7 +156,8 @@ valida todavía:
 - límites máximos, rendimiento y presión de memoria;
 - falta real de espacio;
 - actualización o reinstalación conservando datos;
-- binario Android de producción, iOS, cifrado, biometría o PIN.
+- binario Android de producción, AAB, distribución, iOS, cifrado, biometría o
+  PIN.
 
 La capitalización mensual del núcleo solo admite una tasa única, meses
 calendario completos y ausencia de movimientos intermedios. Si el producto
@@ -165,8 +174,9 @@ al autor ni cifra la copia.
 
 La integración SQLite real se prueba con el módulo incluido en Node 24.15. El
 adaptador estructural de Expo y su conexión a `expo-sqlite`, WAL y archivos se
-comprobaron en recorridos básicos de Android 9 y Android 16. Rendimiento,
-límites, binario de producción e iOS siguen pendientes.
+comprobaron en recorridos básicos de Android 9 y Android 16, incluido el APK
+`preview` autónomo interno. Rendimiento, límites, binario de producción, AAB,
+distribución e iOS siguen pendientes.
 
 Expo Go no será criterio de aceptación. La estrategia recomendada usa un
 development build; EAS Build evita instalar herramientas nativas locales, pero

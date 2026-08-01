@@ -11,7 +11,8 @@ La Fase 2 añadió un núcleo financiero TypeScript independiente y la Fase 3
 incorporó esquema SQLite v1, migraciones, repositorio transaccional y copias
 JSON portables con respaldo y rollback. La Fase 4 ya contiene una interfaz
 Expo/React Native inicial, formulario de meta simple, adaptadores móviles de
-SQLite y archivos, y un development APK generado con EAS.
+SQLite y archivos, un development APK generado con EAS y un APK `preview`
+aprobado como compilación autónoma interna.
 
 El núcleo calcula proyecciones simples y avanzadas, normaliza tasas, reconstruye
 movimientos reales, genera cierres, compara proyectado frente a real y valida
@@ -34,6 +35,18 @@ simple, proyección,
 persistencia, exportación, importación válida, rechazo seguro de JSON inválido,
 funcionamiento sin internet y estabilidad sin señales fatales. No se generó
 otro APK ni se cambiaron dependencias o arquitectura.
+
+Después se generó y probó en el mismo Android 16 un APK `preview` autónomo,
+versión `0.1.0` y `versionCode 8`. Se instaló como paquete nuevo y abrió
+directamente el producto con Wi-Fi y datos móviles desactivados, Metro cerrado,
+el puerto 8081 libre y sin `adb reverse`. Aprobó meta simple, proyección,
+persistencia tras cierre forzado, exportación al resolver de Android,
+importación válida con copia automática previa, rechazo de JSON inválido y una
+observación final estable de 45 segundos. No mostró el development client ni
+herramientas de desarrollo, y los logs limitados al proceso no registraron
+`SIGSEGV`, errores fatales ni `SplashScreenManager`. Esta evidencia aprueba el
+APK como compilación autónoma interna; no equivale todavía a una compilación de
+producción ni a autorización de distribución.
 
 El entrypoint móvil de entrega es `expo-router/entry` y usa las rutas de
 `src/app`. Los entrypoints creados exclusivamente para aislar V1–V6 fueron

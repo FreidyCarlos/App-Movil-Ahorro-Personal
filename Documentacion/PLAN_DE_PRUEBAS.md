@@ -261,6 +261,44 @@ específicas y puente USB. La evidencia local se conserva ignorada por Git. Una
 captura que incluyó el teclado del sistema se eliminó inmediatamente tanto del
 teléfono como del equipo y no se conserva.
 
+### APK `preview` autónomo interno
+
+Consulta: 1 de agosto de 2026. Después del cierre documental anterior se generó
+un único APK EAS con el perfil `preview`, `developmentClient: false` y
+`buildType: "apk"`, destinado exclusivamente a validación interna. El artefacto resolvió la
+versión `0.1.0`, `versionCode 8` y SHA-256
+`30F442630A7EC33F8DA48B1292B468F18AEC049C6BA15D293E394A8F0366B2C6`.
+
+Antes de instalar se confirmó que Metro estaba cerrado, el puerto 8081 libre,
+no existían reenvíos ADB y el repositorio estaba limpio y sincronizado. El
+paquete anterior no estaba instalado, por lo que `adb install` terminó sin
+conflicto de firma, desinstalación ni borrado de datos. Wi-Fi y datos móviles se
+desactivaron antes del primer arranque y la ausencia de salida a internet se
+comprobó de forma independiente.
+
+| Etapa | Resultado confirmado |
+|---|---|
+| Primer arranque | apertura directa del producto sin development client, Metro ni herramientas de desarrollo |
+| Meta simple y proyección | aprobadas con datos sintéticos: `200.000 COP` mensuales durante 6 meses y total de `1.200.000 COP` |
+| Persistencia | aprobada tras cierre forzado y proceso nuevo; meta, plazo y proyección permanecieron sin internet |
+| Exportación | aprobada hasta la generación de la copia y entrega al resolver de Android; no se inspeccionaron destinos ajenos ni se afirmó una copia externa no confirmada |
+| Importación válida | copia sintética compatible, checksum verificado, vista previa de 1 meta, 0 movimientos y esquema 1; la confirmación declaró la copia automática previa y el reemplazo terminó correctamente |
+| Archivo inválido | rechazado antes de ofrecer reemplazo; los datos importados permanecieron intactos |
+| Estabilidad sin internet | mismo proceso durante 45 segundos, interfaz productiva estable y cero señales fatales en logs limitados al proceso |
+| Cierre | conectividad restaurada, app detenida pero instalada, sin reenvíos ADB, 8081 libre y archivos externos de prueba retirados |
+
+Durante la creación de la meta, el importe predeterminado visible tuvo que
+introducirse explícitamente para superar la validación del formulario. No se
+reprodujo ni se aisló una causa, por lo que se registra como observación menor y
+no como fallo confirmado.
+
+No se reprodujo el `SIGSEGV` ni apareció `SplashScreenManager`. Frente al
+development APK, el `preview` abrió el bundle integrado sin selector de servidor
+y sin depender de Metro o del enlace USB para ejecutar el producto. Queda
+aprobado como compilación autónoma interna. Esta prueba no cubre AAB,
+distribución, actualización sobre una instalación con otra firma, iOS,
+accesibilidad ni recursos y rendimiento.
+
 ## Suite de Fase 2
 
 La suite cubre:
