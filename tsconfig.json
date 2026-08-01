@@ -29,5 +29,9 @@
     "src/**/*.ts",
     "tests/**/*.ts",
     "vitest.config.ts"
+  ],
+  "exclude": [
+    "src/app",
+    "src/mobile"
   ]
 }

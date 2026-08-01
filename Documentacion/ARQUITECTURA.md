@@ -1,7 +1,8 @@
 # Arquitectura
 
-Fecha: 30 de julio de 2026. Estado: núcleo financiero y persistencia de Fase 3
-implementados; presentación móvil permanece pendiente.
+Fecha: 31 de julio de 2026. Estado: núcleo financiero, persistencia y primer
+flujo móvil implementados; recorrido funcional básico validado en Android 9 sin
+reproducir el fallo nativo original.
 
 ## Dirección de dependencias
 
@@ -74,6 +75,29 @@ src/
       node-sha256.ts                      SHA-256 para pruebas
 ```
 
+## Módulos iniciales de Fase 4
+
+```text
+src/
+  app/                                      Rutas y pantallas Expo Router
+  application/
+    create-empty-snapshot.ts                Estado inicial persistible
+    mobile-savings-service.ts               Caso de uso de meta simple
+    simple-goal-form.ts                     Validación del formulario
+    mobile-navigation.ts                    Contrato de rutas
+  mobile/
+    infrastructure/
+      mobile-runtime.ts                     Composición Expo/SQLite/copias
+      expo-backup-file-store.ts             Archivos privados y seleccionados
+      expo-checksum-provider.ts              SHA-256 nativo
+    presentation/                           Contexto, tema y errores seguros
+```
+
+La configuración TypeScript portable permanece separada de la configuración
+móvil. Metro incorpora un resolvedor limitado que traduce imports relativos
+`.js` hacia fuentes TypeScript cuando no existe el JavaScript físico, sin
+reescribir los imports ESM que necesita el paquete Node.
+
 ## Decisiones técnicas
 
 - `decimal.js` trabaja con precisión de 50 dígitos significativos. Las entradas
@@ -125,25 +149,42 @@ src/
 - `UNKNOWN` conserva únicamente el estado de captura bloqueado: no crea una
   definición de tasa ni produce equivalencia o rendimiento.
 
-## Frontera de la siguiente fase
+## Estado de la validación móvil
 
-La Fase 4 conectará el puerto SQL con una instancia real de `expo-sqlite`, el
-selector de documentos y el sistema de archivos móvil. No se ha creado todavía
-interfaz React Native/Expo ni se ha validado el adaptador en Android/iOS.
+El puerto SQL ya se compone con `expo-sqlite`; el selector y los archivos usan
+los módulos oficiales de Expo. El development APK se generó e instaló sin
+eliminar datos. Metro empaquetó el bundle y React Native llegó a ejecutar
+`main`, pero Android terminó el proceso con `SIGSEGV` en el hilo `mqt_v_js`.
 
-Las pruebas reales de falta de espacio, cierre abrupto y selector móvil también
-corresponden a la Fase 4.
+Una repetición controlada posterior sí demostró el arranque completo hasta la
+migración, verificación, estado vacío y lectura inicial. V6 y el flujo completo
+permanecieron estables durante 120 segundos tanto con el onboarding de Expo
+abierto como después de pulsar `Continue`; el fallo original no se reprodujo.
+Una prueba agrupada adicional validó escritura y lectura de una meta,
+persistencia tras cierre forzado, proyección, exportación, importación válida,
+rechazo de archivo inválido y modo sin red. No se atribuye el evento original a
+SQLite, al formateo monetario, al onboarding ni a la arquitectura nueva. Faltan
+pruebas de límites, falta de espacio y Android moderno.
+
+El mensaje por ausencia de `SplashScreenManager` proviene de una búsqueda
+reflectiva opcional de `expo-dev-launcher`, capturada antes de continuar. No se
+hallaron duplicados ni configuración splash y no tuvo impacto observable; no
+justifica por sí solo un cambio nativo.
+
+El entrypoint final volvió a `expo-router/entry`; las rutas productivas viven en
+`src/app`. Los entrypoints y rutas creados solo para V1–V6 se retiraron al
+terminar el diagnóstico. Una prueba física corta posterior confirmó apertura,
+meta simple, persistencia, exportación e importaciones desde esta entrada real.
 
 La prevalidación física confirmó Android 9/API 28 y ARM64, compatibles con el
-mínimo Android 7 de Expo SDK 57. La estrategia de validación será un development
-build propio; Expo Go no será evidencia suficiente para persistencia,
+mínimo Android 7 de Expo SDK 57. La estrategia de validación usa un development
+build propio; Expo Go no es evidencia suficiente para persistencia,
 configuración nativa, reinstalación o entrega.
 
-Mientras no exista un SDK/JDK local, la ruta más liviana es un APK de desarrollo
-generado por EAS Build, sujeto a autorización para usar cuenta, red y servicio
-remoto. La alternativa sin nube es JDK 17 más Android SDK Command-Line Tools,
-plataforma y Build Tools. Android Studio no es requisito inicial al disponer de
-un dispositivo físico.
+El APK de desarrollo se generó mediante EAS Build con una lista blanca de
+archivos. La alternativa sin nube sigue siendo JDK 17 más Android SDK
+Command-Line Tools, plataforma y Build Tools. Android Studio no es requisito
+inicial al disponer de un dispositivo físico.
 
 La integración Node usa el SQLite incluido en Node 24.15 únicamente para pruebas
 con archivos temporales reales. No es una dependencia del binario móvil.

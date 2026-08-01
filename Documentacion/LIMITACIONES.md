@@ -1,6 +1,6 @@
 # Limitaciones
 
-Fecha: 30 de julio de 2026.
+Fecha: 31 de julio de 2026.
 
 ## Financieras
 
@@ -114,25 +114,32 @@ Fecha: 30 de julio de 2026.
 - Solo existe un Java Runtime 8; faltan JDK, `javac` y `JAVA_HOME`.
 - No se verificó un Android SDK completo, variables de SDK, `sdkmanager`,
   plataforma ni Build Tools.
-- Expo y EAS no están instalados.
-- No se ejecutó una instalación real porque todavía no existe un APK propio.
+- Expo SDK 57 está integrado y existe un development APK generado mediante
+  EAS. La instalación por ADB fue correcta.
+- En Android 9/API 28 el primer flujo completo terminó con un `SIGSEGV` nativo
+  en el hilo JavaScript. Seis variantes reducidas y cuatro controles de
+  onboarding de 120 segundos, incluidos arranques completos con datos limpios,
+  no reprodujeron la causa.
+- El APK registra un error no fatal porque `DevLauncherController` no encuentra
+  `expo.modules.splashscreen.SplashScreenManager`. Es una búsqueda reflectiva
+  de un módulo opcional, capturada por el launcher; no hay duplicados ni plugin
+  splash y el flujo continúa, por lo que no se modifica el APK sin impacto o
+  corrección demostrable.
+- La prueba agrupada aprobó migración, lectura/escritura, persistencia,
+  exportación, importación válida e inválida, modo sin red y recuperación. La
+  compatibilidad definitiva aún requiere repetirla en un Android moderno.
 
 ## Estado actual
 
-La Fase 3 contiene el núcleo financiero, un esquema SQLite v1, migraciones,
-repositorio transaccional y copias portables ejecutables y probados. No existen
-todavía:
+La Fase 4 contiene una primera aplicación React Native/Expo. En Android 9 se
+validó un recorrido básico del adaptador `expo-sqlite`, selector, archivos,
+persistencia, reemplazo por importación y funcionamiento sin red. Esto no
+valida todavía:
 
-- aplicación React Native/Expo;
-- conexión ejecutada contra `expo-sqlite` en dispositivo;
-- selector o sistema de archivos móvil;
-- interfaz, pruebas de componentes ni E2E;
-- compilación o ejecución en emulador;
-- cifrado, biometría o PIN.
-
-Las pruebas reales de falta de espacio, cierre abrupto y selector móvil quedan
-asignadas a la Fase 4. El adaptador estructural `expo-sqlite` no se considera
-validado hasta ejecutarlo en un dispositivo.
+- límites máximos, rendimiento y presión de memoria;
+- falta real de espacio;
+- actualización o reinstalación conservando datos;
+- Android moderno, iOS, cifrado, biometría o PIN.
 
 La capitalización mensual del núcleo solo admite una tasa única, meses
 calendario completos y ausencia de movimientos intermedios. Si el producto
@@ -148,9 +155,9 @@ respaldo y reemplazo transaccional. SHA-256 detecta cambios, pero no autentica
 al autor ni cifra la copia.
 
 La integración SQLite real se prueba con el módulo incluido en Node 24.15. El
-adaptador estructural de Expo está implementado, pero su conexión a
-`expo-sqlite`, rendimiento, WAL y archivos deben verificarse en Android/iOS
-durante la Fase 4.
+adaptador estructural de Expo y su conexión a `expo-sqlite`, WAL y archivos se
+comprobaron en el recorrido básico de Android 9. Rendimiento, límites e iOS
+siguen pendientes.
 
 Expo Go no será criterio de aceptación. La estrategia recomendada usa un
 development build; EAS Build evita instalar herramientas nativas locales, pero

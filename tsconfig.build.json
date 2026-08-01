@@ -11,6 +11,8 @@
   "exclude": [
     "tests",
     "**/*.test.ts",
+    "src/app",
+    "src/mobile",
     "src/node.ts",
     "src/infrastructure/crypto/node-sha256.ts",
     "src/infrastructure/database/node-sqlite-database.ts",

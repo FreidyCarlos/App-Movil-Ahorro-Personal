@@ -1,7 +1,7 @@
 # Migraciones y operación segura de SQLite
 
-Fecha: 30 de julio de 2026. Estado: esquema inicial de Fase 3 implementado y
-probado con SQLite real.
+Fecha: 31 de julio de 2026. Estado: esquema inicial de Fase 3 implementado,
+probado con SQLite real y comprobado en Android 9 mediante `expo-sqlite`.
 
 ## Objetivo
 
@@ -148,6 +148,13 @@ La reparación automática de una base dañada queda fuera del MVP. Primero se
 debe conservar el archivo y evaluar qué datos son recuperables.
 
 ## Pruebas asociadas
+
+La prueba física agrupada del 31 de julio de 2026 comprobó una base nueva con
+`user_version=1`, integridad `HEALTHY` y las 13 tablas de aplicación. La meta
+simple guardada produjo filas coherentes en `goals`, `plan_configurations` y
+`simple_configurations`; después de cierre forzado y reapertura, la meta y su
+proyección permanecieron visibles. El archivo principal, WAL y SHM se leyeron
+sin modificar la base para corroborar el estado físico.
 
 `tests/sqlite-persistence.test.ts` usa archivos SQLite temporales reales y
 cubre:

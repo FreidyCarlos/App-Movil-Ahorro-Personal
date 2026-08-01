@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Ahorro Personal",
+    "slug": "ahorro-personal",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "ahorropersonal",
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-document-picker"
+    ],
+    "android": {
+      "package": "com.ahorropersonal.app",
+      "versionCode": 7,
+      "adaptiveIcon": {
+        "backgroundColor": "#E8F4EE"
+      }
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ahorropersonal.app"
+    },
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "8e15df08-016b-4157-8b12-0d34120aa4f0"
+      }
+    },
+    "owner": "fl_cc"
+  }
+}

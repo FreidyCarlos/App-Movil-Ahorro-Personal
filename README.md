@@ -7,15 +7,30 @@ bancaria y sin depender de internet para sus funciones principales.
 ## Estado actual
 
 La definición del MVP, el modelo y las reglas financieras están documentados.
-La Fase 2 añadió un núcleo financiero TypeScript independiente. La Fase 3
+La Fase 2 añadió un núcleo financiero TypeScript independiente y la Fase 3
 incorporó esquema SQLite v1, migraciones, repositorio transaccional y copias
-JSON portables con respaldo y rollback.
+JSON portables con respaldo y rollback. La Fase 4 ya contiene una interfaz
+Expo/React Native inicial, formulario de meta simple, adaptadores móviles de
+SQLite y archivos, y un development APK generado con EAS.
 
 El núcleo calcula proyecciones simples y avanzadas, normaliza tasas, reconstruye
 movimientos reales, genera cierres, compara proyectado frente a real y valida
 una representación JSON de dominio. La integración usa SQLite real en pruebas
-Node y deja un adaptador estructural para `expo-sqlite`. Todavía no existe una
-aplicación instalable ni una validación en dispositivo móvil.
+Node y conecta el mismo puerto con `expo-sqlite` en la aplicación.
+
+La primera instalación del development APK en Android 9 fue correcta, aunque
+una ejecución terminó por un fallo nativo `SIGSEGV` en el hilo JavaScript
+después de cargar el bundle. Seis variantes, cuatro controles de onboarding y
+una prueba funcional agrupada posterior no reprodujeron el fallo; `Continue`
+no mostró relación causal. En el dispositivo se validaron el esquema SQLite v1,
+la creación y persistencia de una meta tras cierre forzado, la proyección, la
+exportación, la importación válida, el rechazo de un archivo inválido y el flujo
+sin internet. La causa del evento original permanece indeterminada y aún falta
+repetir la compatibilidad en un Android moderno.
+
+El entrypoint móvil de entrega es `expo-router/entry` y usa las rutas de
+`src/app`. Los entrypoints creados exclusivamente para aislar V1–V6 fueron
+retirados después del diagnóstico; sus resultados permanecen documentados.
 
 Los datos base, revisiones, configuraciones y metadatos auditables son la fuente
 de verdad. Proyecciones y comparaciones se recalculan con el motor vigente; no
@@ -104,7 +119,7 @@ SQLite / archivos locales
 ```
 
 El dominio financiero es independiente de React Native, Expo y SQLite. Los
-importes y tasas se calcularán con aritmética decimal y conservarán sus datos
+importes y tasas se calculan con aritmética decimal y conservan sus datos
 originales para trazabilidad.
 
 ## Datos y seguridad

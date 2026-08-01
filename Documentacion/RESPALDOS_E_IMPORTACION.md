@@ -1,7 +1,7 @@
 # Respaldos, exportación e importación
 
-Fecha: 30 de julio de 2026. Estado: flujo portable y reemplazo seguro de Fase 3
-implementados; selector y sistema de archivos móvil se conectarán en Fase 4.
+Fecha: 31 de julio de 2026. Estado: flujo portable y reemplazo seguro de Fase 3
+implementados; selector y sistema de archivos comprobados en Android 9.
 
 ## Formato portable
 
@@ -144,6 +144,17 @@ de hardware.
   no certifica autenticidad.
 
 ## Pruebas asociadas
+
+La prueba física agrupada del 31 de julio de 2026 creó una copia con formato
+`AHORRO_PERSONAL_BACKUP`, sobre v1, esquema v1, una meta y checksum SHA-256.
+La aplicación verificó la vista previa, exigió confirmación, creó un respaldo
+automático y reemplazó correctamente el estado. Un JSON ajeno renombrado con
+extensión `.json` fue rechazado antes de modificar datos o crear otro respaldo.
+
+Android 9 deshabilitó inicialmente los archivos porque el proveedor no los
+expuso como `application/json`. El selector acepta ahora cualquier MIME para no
+depender de esa clasificación; el almacén de archivos conserva la validación
+obligatoria de extensión, tamaño, estructura, versión y checksum.
 
 `tests/backup-import.test.ts` cubre:
 

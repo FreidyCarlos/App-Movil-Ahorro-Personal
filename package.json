@@ -4,7 +4,7 @@
   "private": true,
   "description": "Núcleo financiero independiente para metas de ahorro personales.",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "expo-router/entry",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
@@ -20,25 +20,45 @@
     "dist"
   ],
   "scripts": {
+    "start": "node scripts/start-expo.mjs",
+    "android": "node scripts/start-expo.mjs --android",
     "build": "npm run build:portable && npm run build:node",
     "build:portable": "tsc -p tsconfig.build.json",
     "build:node": "tsc -p tsconfig.node.json",
     "typecheck": "tsc --noEmit",
+    "typecheck:mobile": "tsc -p tsconfig.mobile.json --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "check": "npm run typecheck && npm test && npm run build"
+    "check": "npm run typecheck && npm run typecheck:mobile && npm test && npm run build"
   },
   "engines": {
     "node": ">=24.15.0"
   },
   "dependencies": {
     "decimal.js": "10.6.0",
+    "expo": "~57.0.9",
+    "expo-constants": "~57.0.8",
+    "expo-crypto": "~57.0.1",
+    "expo-dev-client": "~57.0.10",
+    "expo-document-picker": "~57.0.1",
+    "expo-file-system": "~57.0.1",
+    "expo-linking": "~57.0.4",
+    "expo-router": "~57.0.9",
+    "expo-sharing": "~57.0.8",
+    "expo-sqlite": "~57.0.1",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.2",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
     "@types/node": "26.1.2",
+    "@types/react": "~19.2.2",
     "@vitest/coverage-v8": "4.1.10",
-    "typescript": "7.0.2",
+    "typescript": "~6.0.3",
     "vitest": "4.1.10"
   }
 }

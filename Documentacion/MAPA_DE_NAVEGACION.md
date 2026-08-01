@@ -1,6 +1,7 @@
 # Mapa de navegación móvil
 
-Fecha: 30 de julio de 2026. Diseño conceptual, no interfaz implementada.
+Fecha: 31 de julio de 2026. El mapa completo sigue siendo conceptual; Fase 4
+implementó el recorrido inicial de lista, meta simple y copias de seguridad.
 
 ## Estructura principal
 

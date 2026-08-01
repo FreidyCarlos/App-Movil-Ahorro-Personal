@@ -1,7 +1,7 @@
 # Criterios de aceptación
 
-Fecha: 30 de julio de 2026. Estos criterios definen el resultado futuro; en la
-Fase 1 solo se valida que estén documentados.
+Fecha: 31 de julio de 2026. Estos criterios definen el resultado del MVP; la
+evidencia disponible alcanza hasta el recorrido móvil inicial de Fase 4.
 
 ## Producto y metas
 
@@ -117,16 +117,18 @@ Fase 1 solo se valida que estén documentados.
 - **CA-063:** una caché futura incluye versión del motor, valida su huella y
   puede descartarse sin pérdida.
 
-Evidencia de Fase 3:
+Evidencia de Fases 3 y 4:
 
 - CA-050 y CA-052 a CA-061 están implementados en la capa independiente y
   probados con SQLite/archivos temporales reales.
-- CA-051 está comprobado mediante cierre y reapertura en Node. Permanece
-  pendiente repetirlo con `expo-sqlite` en Android, por lo que no se declara
-  finalizado para el MVP móvil.
-- La falta de espacio se simula en el puerto de archivos. Su comportamiento
-  real, el cierre abrupto y el selector móvil corresponden a la Fase 4.
-- El adaptador `expo-sqlite` sigue sin validación en dispositivo.
+- CA-051 se comprobó mediante cierre y reapertura tanto en Node como con
+  `expo-sqlite` en Android 9.
+- El cierre forzado, selector, exportación, importación válida y rechazo de un
+  archivo inválido se comprobaron en el Moto X4.
+- La falta de espacio solo se simula en el puerto de archivos; su comportamiento
+  real permanece pendiente.
+- El adaptador `expo-sqlite` quedó validado para el recorrido básico, no para
+  límites de volumen, presión de memoria, Android moderno ni iOS.
 
 ## Seguridad y privacidad
 
@@ -145,8 +147,9 @@ Evidencia de Fase 3:
   implementados.
 
 En Fase 3 se verificaron consultas parametrizadas, transacciones, errores
-seguros, archivos limitados y ausencia de secretos. La revisión de logs,
-permisos y compilación móvil corresponde a Fases 4 y 5.
+seguros, archivos limitados y ausencia de secretos. Fase 4 añadió logs
+filtrados por proceso y un development build; permisos y compilación de
+producción corresponden a revisiones posteriores.
 
 ## Experiencia y accesibilidad futuras
 
@@ -192,7 +195,7 @@ El MVP no estará terminado sin resultados reales de:
 
 No se acepta una prueba no ejecutada ni una cifra corregida solo en la interfaz.
 
-## Evidencia parcial de Fase 2
+## Evidencia histórica de Fase 2
 
 Se verificaron exclusivamente los criterios correspondientes al núcleo:
 
@@ -205,6 +208,17 @@ Se verificaron exclusivamente los criterios correspondientes al núcleo:
 - serialización de dominio v1 estricta y determinista.
 
 La ejecución registrada fue: 77 pruebas unitarias aprobadas, typecheck y build
-aprobados, y auditoría npm con 0 vulnerabilidades conocidas. Esto no satisface
-los criterios de persistencia, interfaz, E2E, compilación móvil ni dispositivo;
-el MVP completo sigue pendiente.
+aprobados, y auditoría npm con 0 vulnerabilidades conocidas. En ese corte aún
+no existían persistencia, interfaz, compilación móvil ni prueba en dispositivo.
+
+## Evidencia de cierre de Fase 4
+
+El cierre registró 124 pruebas aprobadas, typecheck portable y móvil, build,
+20 de 20 controles de `expo-doctor` y auditoría sin vulnerabilidades altas o
+críticas. La auditoría conserva 11 hallazgos moderados transitivos de las
+herramientas Expo, sin una actualización compatible demostrada.
+
+El development APK y el entrypoint productivo se comprobaron en Android 9 con
+meta simple, persistencia, exportación e importación. Siguen pendientes, entre
+otros criterios del MVP completo, la interfaz avanzada, accesibilidad con
+tecnología asistiva, compilación de producción y Android moderno.

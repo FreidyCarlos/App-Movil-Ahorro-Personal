@@ -247,18 +247,45 @@ excluye. Requiere evaluar recuperación, exposición y comportamiento de Expo.
 ### DP-15 — Versiones mínimas y alcance iOS
 
 El Moto X4 con Android 9/API 28 es compatible con el mínimo Android 7 de Expo
-SDK 57. La versión exacta del SDK se fijará al iniciar Fase 4. Siguen pendientes
-las versiones mínimas definitivas de producto y el alcance iOS.
+SDK 57. El primer flujo completo terminó con un fallo nativo; seis variantes,
+cuatro controles de onboarding y una prueba funcional agrupada posteriores
+fueron estables. La última cubrió SQLite, cierre forzado, proyección,
+exportación, importación válida e inválida y funcionamiento sin internet.
+Siguen pendientes una prueba en Android moderno, las versiones mínimas
+definitivas de producto y el alcance iOS.
 
-### DP-16 — Origen del primer development build
+### DP-16 — Origen del primer development build — resuelta
 
-Recomendación: usar EAS Build para obtener el primer APK sin instalar el SDK
-Android completo. Requiere aprobación explícita porque implica cuenta,
-conectividad y procesamiento remoto del código.
+Se usó EAS Build con un perfil exclusivamente de desarrollo y una lista blanca
+de archivos. El APK se generó e instaló sin publicación en tiendas.
 
 Alternativa sin servicio remoto: instalar JDK 17 y Android SDK Command-Line
 Tools con plataforma y Build Tools. No se requiere Android Studio para probar
 en el dispositivo físico.
+
+### DP-17 — Fallo nativo de arranque en Android 9
+
+Diagnóstico sin reproducción, causa no resuelta. El primer flujo completo llegó
+a ejecutar `main` y luego terminó con `SIGSEGV` en `mqt_v_js`. No reprodujeron
+el fallo, probados por separado: arranque estático, formato COP manual,
+`Intl.NumberFormat`, Decimal.js, Expo Router ni apertura de SQLite sin SQL de
+aplicación. Tampoco se reprodujo al ejecutar durante 120 segundos V6 y el
+arranque completo, cada uno con datos limpios, con el onboarding abierto y
+después de pulsar `Continue`.
+
+`Continue` no queda demostrado como causa ni como corrección. Una prueba
+agrupada posterior validó migración, lectura/escritura, repositorio, cierre y
+reapertura, exportación, importación válida e inválida y modo sin red, sin fallo
+fatal. No se atribuye la causa a una dependencia por ausencia de reproducción,
+no se desactivará la Nueva Arquitectura obligatoria de Expo SDK 57 y la
+compatibilidad final requiere repetir el flujo en un Android moderno.
+
+El error no fatal por ausencia de
+`expo.modules.splashscreen.SplashScreenManager` quedó documentado como una ruta
+opcional capturada por `expo-dev-launcher`: no hay duplicados, dependencia ni
+plugin splash configurado, y el proceso continúa hasta `main`. Sin impacto
+funcional ni corrección demostrable, no justifica modificar dependencias ni
+generar otro EAS Build.
 
 ## Investigación adicional antes de ampliar el soporte productivo
 

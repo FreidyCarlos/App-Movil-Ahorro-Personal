@@ -1,7 +1,8 @@
 # Plan de pruebas
 
-Fecha: 30 de julio de 2026. Estado: pruebas unitarias e integración de Fase 3
-ejecutadas; componentes móviles y E2E permanecen pendientes.
+Fecha: 31 de julio de 2026. Estado: pruebas unitarias e integración ejecutadas;
+diagnóstico físico sin reproducción del fallo nativo y prueba funcional
+agrupada de Fase 4 aprobada en Android 9.
 
 ## Herramientas
 
@@ -27,8 +28,8 @@ publicar su número de serie.
 | Autorización | ADB seguro activo y depuración habilitada |
 | Instalación | cliente ADB admite `install`; Package Manager e instalador responden |
 
-No se instaló un APK: la prueba de instalación real necesita primero un
-artefacto propio y autorización dentro de la Fase 4.
+La instalación posterior del development APK fue autorizada y finalizó
+correctamente sin desinstalar aplicaciones ni borrar datos.
 
 Entorno del equipo:
 
@@ -40,15 +41,16 @@ Entorno del equipo:
   través del proceso ya iniciado. Esto no sustituye un SDK configurado.
 - No se detectaron `ANDROID_HOME`, `ANDROID_SDK_ROOT`, `sdkmanager`, plataforma
   Android ni Build Tools verificables.
-- Expo CLI, EAS CLI y dependencias Expo locales aún no existen.
+- Expo SDK 57 y los módulos móviles quedaron fijados en el proyecto. El APK de
+  desarrollo se generó mediante EAS Build.
 
 Android 9 es compatible con Expo SDK 57, cuyo mínimo documentado es Android 7.
-El SDK exacto se fijará al crear el proyecto en Fase 4, no durante esta
-prevalidación.
+Expo SDK 57 quedó fijado al implementar Fase 4 y fue la versión usada para el
+development build validado.
 
-### Estrategia recomendada
+### Estrategia utilizada
 
-El artefacto principal de pruebas debe ser un **development build de Expo**:
+El artefacto principal de pruebas fue un **development build de Expo**:
 
 1. opción inicial menos pesada: EAS Build genera un APK de desarrollo, si el
    responsable autoriza cuenta, conectividad y carga del código al servicio;
@@ -73,6 +75,135 @@ Fuentes oficiales consultadas el 30 de julio de 2026:
 - [Expo DocumentPicker](https://docs.expo.dev/versions/latest/sdk/document-picker/)
 - [Entorno Android de React Native](https://reactnative.dev/docs/next/set-up-your-environment)
 - [Android SDK Command-Line Tools](https://developer.android.com/tools/sdkmanager)
+
+## Ejecución física inicial de Fase 4
+
+| Prueba | Resultado |
+|---|---|
+| ADB previo | un dispositivo autorizado en estado `device` |
+| Instalación APK | aprobada con `adb install -r`; paquete nuevo |
+| Primer arranque del development client | aprobado |
+| Conexión inicial a Metro | falló por listener IPv6; corregida con listener IPv4 y reenvío USB |
+| Bundle Android | generado por Metro; React Native ejecutó `main` |
+| Estabilidad | **fallida**: `Fatal signal 11 (SIGSEGV), code 2 (SEGV_ACCERR)` en `mqt_v_js` |
+| SQLite, meta simple y proyección | no ejecutadas por el bloqueo |
+| Reinicio de app y persistencia | no ejecutadas |
+| Exportación/importación | no ejecutadas |
+| Archivo inválido y rollback | no ejecutadas |
+| Modo sin internet | no ejecutada |
+| Memoria y espacio de datos | no medidos con flujo estable |
+
+Los logs se limitaron al PID histórico del paquete. No se registró estado
+financiero completo. El proceso Metro y el reenvío USB se retiraron al detener
+la prueba; el paquete quedó instalado y sus datos no se limpiaron.
+
+### Diagnóstico por reducción del fallo nativo
+
+Consulta: 31 de julio de 2026. Cada variante se generó como development APK
+identificable, se instaló con `adb install -r` sin borrar datos y se ejecutó con
+logs limitados al PID del paquete.
+
+| Variante | Única categoría ejercitada | Resultado físico |
+|---|---|---|
+| V1 | texto estático; sin navegación, dominio, SQLite, Decimal ni archivos | estable durante 165 segundos; segundo plano/regreso, cierre normal y cierre forzado aprobados |
+| V2 | formato COP manual sin `Intl` | estable durante 120 segundos; resultado visual correcto |
+| V3 | `Intl.NumberFormat` aislado | estable durante 120 segundos; resultado visual correcto |
+| V4 | Decimal.js aislado | estable durante 120 segundos; operación decimal correcta |
+| V5 | Expo Router sobre un árbol diagnóstico separado | estable durante 120 segundos; pila y ruta visibles |
+| V6 | `expo-sqlite.openDatabaseAsync` sin SQL de aplicación | estable durante 120 segundos; apertura llegó a estado `LISTA` |
+
+Ninguna de estas seis variantes reprodujo el `SIGSEGV`. Esto descarta una
+reproducción mínima en las condiciones probadas, pero no demuestra que una
+categoría sea inocua en combinación con otras. No se asigna la causa a `Intl`,
+Decimal.js, Expo Router, SQLite, Hermes ni a otra dependencia.
+
+### Control del onboarding de Expo
+
+Se identificó una diferencia entre el intento fallido y V1–V6: en el primero
+quedó abierto el onboarding del menú de desarrollo, mientras que antes de las
+variantes se pulsó `Continue`. Como `adb install -r` conservó los datos del
+paquete, las seis variantes heredaron `isOnboardingFinished=true`.
+
+Se repitieron cuatro condiciones con `pm clear` antes de cada una. La ausencia
+de `Continue` se comprobó porque la preferencia `isOnboardingFinished` no
+existía; al pulsarlo se comprobó su valor `true`. Cada intervalo comenzó después
+de que V6 informara `READY` o de que el flujo completo ejecutara `main` y
+mostrara la lista inicial de metas.
+
+| Entrada JavaScript | Estado del onboarding | Resultado físico |
+|---|---|---|
+| V6, apertura aislada de SQLite | abierto, sin pulsar `Continue` | 120 segundos; mismo PID y cero fallos fatales |
+| V6, apertura aislada de SQLite | `Continue` completado | 120 segundos; mismo PID y cero fallos fatales |
+| Flujo completo | abierto, sin pulsar `Continue` | 120 segundos; mismo PID y cero fallos fatales |
+| Flujo completo | `Continue` completado | 120 segundos; mismo PID y cero fallos fatales |
+
+El botón no quedó demostrado como causa ni como corrección del `SIGSEGV`. El
+arranque completo ejercitó apertura, migración, verificación de integridad,
+creación del estado vacío y lectura inicial. La prueba agrupada posterior cubrió
+también operaciones funcionales sin volver a reproducir el fallo.
+
+Los logs mostraron además un error no fatal e independiente:
+`DevLauncherController` no encontró
+`expo.modules.splashscreen.SplashScreenManager` al intentar ocultar la pantalla
+de inicio. La auditoría encontró una sola versión deduplicada de Expo,
+dev-client, launcher, router y React Native; `expo-splash-screen` no está
+declarado ni existe un plugin splash. El launcher busca la clase opcional por
+reflexión, captura `Throwable`, registra el mensaje y continúa. Como el proceso
+ejecutó `main` y completó el flujo, no hay una corrección demostrable ni causa
+para cambiar dependencias o generar otro APK.
+
+### Prueba funcional agrupada en Android 9
+
+Se reutilizaron el development APK y Metro. La misma sesión, sin limpiar datos
+ni reinstalar, produjo estos resultados:
+
+| Etapa | Evidencia | Resultado |
+| --- | --- | --- |
+| Esquema y migración | `user_version=1`, integridad `HEALTHY` y 13 tablas de aplicación | aprobada |
+| Escritura y lectura | meta `MetaPersistencia`, aporte mensual de 250.000 COP por 12 meses desde 2026-08-01 | aprobada; proyección de 3.000.000 COP y rendimiento 0 |
+| Persistencia | cierre forzado, PID nuevo y lectura posterior de la misma meta y proyección | aprobada |
+| Exportación | sobre `AHORRO_PERSONAL_BACKUP`, versión 1, esquema 1, una meta y SHA-256 de 64 caracteres | aprobada; selector de compartir abierto sin enviar datos |
+| Importación válida | vista previa 1 meta/0 movimientos/esquema 1, confirmación y respaldo automático | aprobada; respaldos privados pasaron de 1 a 2 |
+| Archivo inválido | JSON ajeno renombrado `.json` | rechazado antes del reemplazo con mensaje seguro; respaldos permanecieron en 2 |
+| Sin internet | Wi-Fi y datos móviles desactivados, ping fallido y Metro por USB | aprobada; arranque, meta y proyección visibles; conectividad restaurada |
+| Recuperación | cierre forzado y reapertura dentro de las etapas de persistencia y modo sin red | aprobada, sin pérdida observable |
+| Estabilidad | logs filtrados del proceso | cero `SIGSEGV`, `Fatal signal` o `FATAL EXCEPTION` |
+
+El selector de Android 9 deshabilitaba archivos `.json` cuando la aplicación
+pedía exclusivamente MIME `application/json`; algunos proveedores los
+clasifican como texto o binario genérico. Se amplió solo el filtro de selección
+a `*/*`. La extensión `.json`, el tamaño, el esquema y el checksum siguen
+validándose dentro de la aplicación. Ambos archivos quedaron seleccionables y
+las pruebas válida e inválida demostraron el control posterior. Es un cambio
+JavaScript y no requiere otro EAS Build.
+
+### Cierre con el entrypoint productivo
+
+Después de retirar los entrypoints diagnósticos se restauró
+`expo-router/entry`. Metro confirmó que empaquetó
+`node_modules/expo-router/entry.js` y tomó `src/app` como raíz. Se reutilizaron
+el mismo APK, la base existente y Metro; no hubo cambio nativo ni EAS Build.
+
+Se ejecutó una única prueba física corta, limitada al riesgo del cambio de
+entrada:
+
+| Etapa | Resultado |
+| --- | --- |
+| Apertura productiva | aprobada; flujo `Ahorro Personal` y meta previa visibles |
+| Meta nueva | `CierreFase4`, 120.000 COP mensuales por 5 meses |
+| Proyección | 600.000 COP y rendimiento proyectado 0 |
+| Cierre forzado | PID cambió y la meta/proyección permanecieron tras reapertura |
+| Exportación | aprobada; respaldos privados pasaron de 2 a 3 y abrió el selector de compartir |
+| Importación válida | vista previa aprobada y reemplazo confirmado; respaldo automático elevó el total de 3 a 4 |
+| Archivo inválido | rechazado antes de vista previa o reemplazo; respaldos permanecieron en 4 |
+| Estabilidad | cero `SIGSEGV`, `Fatal signal` o `FATAL EXCEPTION` |
+
+La copia válida usada contenía la meta previa, por lo que el reemplazo final
+dejó nuevamente `MetaPersistencia` como estado importado. Esto es el
+comportamiento previsto de importación por reemplazo, no pérdida inesperada.
+El `SIGSEGV` permanece como fallo histórico no reproducido y la anomalía de
+`SplashScreenManager` permanece no fatal y documentada. Android moderno sigue
+pendiente sin bloquear el cierre de la comprobación en Moto X4.
 
 ## Suite de Fase 2
 
@@ -181,12 +312,13 @@ concentran en corrupción o pérdida de datos.
 
 - formularios, navegación, estados vacíos y errores de almacenamiento;
 - datos provenientes de repositorios reales.
-- repetir migraciones, reinicio, archivos y transacciones con `expo-sqlite` en
-  Android;
-- conectar selector, compartición y sistema de archivos móvil.
-- ejecutar falta de espacio y cierre abrupto reales en dispositivo.
-- crear e instalar un development APK, comprobar apertura, cierre forzado,
-  persistencia, actualización y reinstalación;
+- repetir la prueba agrupada en un Android moderno antes de cerrar
+  compatibilidad;
+- medir límites grandes de importación y uso de recursos en Android de gama
+  baja;
+- ejecutar falta de espacio real solo con autorización específica;
+- comprobar actualización y reinstalación en una sesión que permita modificar
+  la instalación;
 - capturar únicamente logs filtrados por aplicación/PID y verificar que no
   expongan datos financieros;
 - solicitar autorización antes de desinstalar, limpiar datos o provocar

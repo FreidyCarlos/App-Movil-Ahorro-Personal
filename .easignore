@@ -1,0 +1,24 @@
+# Lista blanca para compilaciones remotas. Todo lo no enumerado queda fuera.
+*
+
+!.easignore
+!.gitignore
+!app.json
+!eas.json
+!metro.config.cjs
+!package.json
+!package-lock.json
+!tsconfig.json
+!tsconfig.build.json
+!tsconfig.node.json
+!tsconfig.mobile.json
+!scripts
+!scripts/start-expo.mjs
+!src
+!src/**
+
+# Implementaciones exclusivas de Node no necesarias para Android.
+src/node.ts
+src/infrastructure/crypto/node-sha256.ts
+src/infrastructure/database/node-sqlite-database.ts
+src/infrastructure/files/safe-node-backup-file-store.ts
