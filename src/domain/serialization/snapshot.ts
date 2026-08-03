@@ -159,6 +159,25 @@ function validateUniqueIds(
   }
 }
 
+function assertCollectionLimitBeforeSchema(
+  candidate: unknown,
+  property: string,
+  maximum: number,
+  message: string,
+): void {
+  if (candidate === null || typeof candidate !== "object") {
+    return;
+  }
+  const value = (candidate as Readonly<Record<string, unknown>>)[property];
+  if (Array.isArray(value)) {
+    assertDomain(
+      value.length <= maximum,
+      "SERIALIZATION_ERROR",
+      message,
+    );
+  }
+}
+
 function toRateInput(
   definition: DomainSnapshotV1["rateDefinitions"][number],
 ): InterestRateInput {
@@ -661,6 +680,24 @@ export function validateDomainSnapshot(
     calculateDepth(candidate) <= limits.maximumDepth,
     "SERIALIZATION_ERROR",
     "La estructura excede la profundidad permitida.",
+  );
+  assertCollectionLimitBeforeSchema(
+    candidate,
+    "goals",
+    limits.maximumGoals,
+    "La copia excede el número de metas permitido.",
+  );
+  assertCollectionLimitBeforeSchema(
+    candidate,
+    "movements",
+    limits.maximumMovements,
+    "La copia excede el número de movimientos permitido.",
+  );
+  assertCollectionLimitBeforeSchema(
+    candidate,
+    "ratePeriods",
+    limits.maximumRatePeriods,
+    "La copia excede el número de periodos de tasa permitido.",
   );
   const parsed = domainSnapshotV1Schema.safeParse(candidate);
   if (!parsed.success) {

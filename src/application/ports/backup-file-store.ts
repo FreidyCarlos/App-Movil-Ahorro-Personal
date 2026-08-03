@@ -18,4 +18,5 @@ export interface BackupFileStore {
     contents: string,
   ): Promise<StoredBackupFile>;
   readSelected(reference: string): Promise<SelectedBackupFile>;
+  deleteStored(reference: string): Promise<void>;
 }

@@ -1,6 +1,6 @@
 # Limitaciones
 
-Fecha: 1 de agosto de 2026.
+Fecha: 3 de agosto de 2026.
 
 ## Financieras
 
@@ -65,8 +65,9 @@ Fecha: 1 de agosto de 2026.
   el usuario debe custodiarla.
 - El checksum SHA-256 detecta cambios accidentales; no autentica al autor ni
   impide manipulación.
-- PIN, bloqueo biométrico, SQLCipher y exclusión de respaldos del sistema son
-  fases posteriores, no controles presentes.
+- PIN, bloqueo biométrico y SQLCipher son fases posteriores. Fase 5 deshabilitó
+  el respaldo automático Android en la configuración, pero el cambio solo
+  estará presente en una compilación nativa futura.
 - La aplicación no almacenará credenciales bancarias, tarjetas, contraseñas,
   tokens ni secretos.
 - Los logs deben excluir saldos, movimientos, metas y contenido de copias; aun
@@ -145,8 +146,8 @@ Fecha: 1 de agosto de 2026.
   y su entrega al resolver de Android. La importación válida se comprobó con
   una copia sintética compatible y checksum verificado, no como un roundtrip de
   un archivo externo guardado desde esa misma exportación.
-- Estas validaciones son evidencia complementaria de Fase 4 y no completan la
-  Fase 5 canónica de Seguridad y robustez.
+- Estas validaciones son evidencia complementaria de Fase 4 y no completaban
+  por sí mismas la Fase 5 canónica de Seguridad y robustez.
 
 ## Estado actual
 
@@ -161,10 +162,11 @@ valida todavía:
 - binario Android de producción, AAB, distribución, iOS, cifrado, biometría o
   PIN.
 
-La Fase 5 pendiente debe revisar sistemáticamente dependencias, permisos, logs,
+La ejecución técnica local de Fase 5 revisó dependencias, permisos, logs,
 archivos manipulados, límites, almacenamiento, modelo de amenazas y
-recuperación. La accesibilidad corresponde a Fase 6 y la compilación de
-producción con validación funcional completa, a Fase 7.
+recuperación. Permanece pendiente su publicación y la medición física del caso
+máximo. La accesibilidad corresponde a Fase 6 y la compilación de producción con
+validación funcional completa, a Fase 7.
 
 La capitalización mensual del núcleo solo admite una tasa única, meses
 calendario completos y ausencia de movimientos intermedios. Si el producto

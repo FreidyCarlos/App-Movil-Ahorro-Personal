@@ -215,6 +215,30 @@ describe("migraciones e inicialización SQLite", () => {
       await rm(root, { recursive: true, force: true });
     }
   });
+
+  it("no confunde una base incompleta con una instalación nueva", async () => {
+    const temporary = await temporaryDatabase();
+    try {
+      await initializeDatabase(temporary.database, NOW);
+      const repository = new SQLiteDomainRepository(
+        temporary.database,
+        PERSISTENCE_LIMITS,
+      );
+      expect(await repository.hasDomainState()).toBe(false);
+      await repository.replaceSnapshot(persistenceSnapshot("Debe conservarse"));
+      await temporary.database.run(
+        "DELETE FROM app_settings WHERE singleton_key = ?",
+        [1],
+      );
+
+      await expect(repository.hasDomainState()).rejects.toMatchObject({
+        code: "DATABASE_CORRUPT",
+      });
+      expect((await repository.listGoals())[0]?.name).toBe("Debe conservarse");
+    } finally {
+      await cleanup(temporary.database, temporary.root);
+    }
+  });
 });
 
 describe("repositorio SQLite transaccional", () => {

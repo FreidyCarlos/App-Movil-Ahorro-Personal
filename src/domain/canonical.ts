@@ -72,7 +72,25 @@ export function utf8Bytes(value: string): readonly number[] {
 }
 
 export function utf8ByteLength(value: string): number {
-  return utf8Bytes(value).length;
+  let length = 0;
+  for (const character of value) {
+    const codePoint = character.codePointAt(0);
+    assertDomain(
+      codePoint !== undefined,
+      "SERIALIZATION_ERROR",
+      "No se pudo medir el texto.",
+    );
+    if (codePoint <= 0x7f) {
+      length += 1;
+    } else if (codePoint <= 0x7ff) {
+      length += 2;
+    } else if (codePoint <= 0xffff) {
+      length += 3;
+    } else {
+      length += 4;
+    }
+  }
+  return length;
 }
 
 export function nonCryptographicDigest(value: unknown): string {

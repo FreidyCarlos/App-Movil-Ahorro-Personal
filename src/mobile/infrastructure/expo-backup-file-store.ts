@@ -1,6 +1,7 @@
 import { Directory, File, Paths } from "expo-file-system";
 
 import { PersistenceError } from "../../application/errors/persistence-error.js";
+import { utf8ByteLength } from "../../domain/canonical.js";
 import type {
   BackupFileStore,
   SelectedBackupFile,
@@ -24,6 +25,12 @@ export class ExpoBackupFileStore implements BackupFileStore {
   readonly #nextTemporaryId: () => string;
 
   public constructor(maximumBytes: number, nextTemporaryId: () => string) {
+    if (!Number.isInteger(maximumBytes) || maximumBytes <= 0) {
+      throw new PersistenceError(
+        "BACKUP_FILE_INVALID",
+        "El límite de archivos debe ser un entero positivo.",
+      );
+    }
     this.#maximumBytes = maximumBytes;
     this.#nextTemporaryId = nextTemporaryId;
   }
@@ -33,6 +40,13 @@ export class ExpoBackupFileStore implements BackupFileStore {
     contents: string,
   ): Promise<StoredBackupFile> {
     validateDisplayName(displayName);
+    const expectedSize = utf8ByteLength(contents);
+    if (expectedSize > this.#maximumBytes) {
+      throw new PersistenceError(
+        "BACKUP_FILE_TOO_LARGE",
+        "La copia excede el tamaño permitido.",
+      );
+    }
     try {
       this.#directory.create({ idempotent: true, intermediates: true });
       const destination = new File(this.#directory, displayName);
@@ -55,6 +69,15 @@ export class ExpoBackupFileStore implements BackupFileStore {
           temporary.delete();
         }
         throw error;
+      }
+      if (!destination.exists || destination.size !== expectedSize) {
+        if (destination.exists) {
+          destination.delete();
+        }
+        throw new PersistenceError(
+          "FILE_OPERATION_FAILED",
+          "La copia local quedó incompleta y fue descartada.",
+        );
       }
       return {
         reference: destination.uri,
@@ -87,11 +110,26 @@ export class ExpoBackupFileStore implements BackupFileStore {
           "La copia excede el tamaño permitido.",
         );
       }
+      const expectedSize = file.size;
+      const contents = await file.text();
+      const actualSize = utf8ByteLength(contents);
+      if (actualSize > this.#maximumBytes) {
+        throw new PersistenceError(
+          "BACKUP_FILE_TOO_LARGE",
+          "La copia excede el tamaño permitido.",
+        );
+      }
+      if (actualSize !== expectedSize) {
+        throw new PersistenceError(
+          "BACKUP_FILE_INVALID",
+          "El archivo cambió o no es texto UTF-8 válido.",
+        );
+      }
       return {
         reference: file.uri,
         displayName: file.name.slice(0, 180),
-        sizeBytes: file.size,
-        contents: await file.text(),
+        sizeBytes: actualSize,
+        contents,
       };
     } catch (error) {
       if (error instanceof PersistenceError) {
@@ -100,6 +138,20 @@ export class ExpoBackupFileStore implements BackupFileStore {
       throw new PersistenceError(
         "FILE_OPERATION_FAILED",
         "No fue posible leer el archivo seleccionado.",
+      );
+    }
+  }
+
+  public async deleteStored(reference: string): Promise<void> {
+    try {
+      const file = new File(reference);
+      if (file.exists) {
+        file.delete();
+      }
+    } catch {
+      throw new PersistenceError(
+        "FILE_OPERATION_FAILED",
+        "No fue posible retirar una copia local inválida.",
       );
     }
   }

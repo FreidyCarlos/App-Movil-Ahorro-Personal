@@ -513,6 +513,24 @@ describe("serialización versionada", () => {
     ).toThrowError(expect.objectContaining({ code: "SERIALIZATION_ERROR" }));
   });
 
+  it("rechaza colecciones excesivas antes de recorrer elementos hostiles", () => {
+    const excessive = {
+      ...validSnapshot(),
+      movements: [{ execute: "never" }, { execute: "never" }],
+    };
+    expect(() =>
+      validateDomainSnapshot(excessive, {
+        ...LIMITS,
+        maximumMovements: 1,
+      }),
+    ).toThrowError(
+      expect.objectContaining({
+        code: "SERIALIZATION_ERROR",
+        message: "La copia excede el número de movimientos permitido.",
+      }),
+    );
+  });
+
   it("no acepta números no finitos ni funciones como JSON de dominio", () => {
     expect(
       domainSnapshotV1Schema.safeParse({

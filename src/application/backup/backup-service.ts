@@ -18,6 +18,7 @@ import type {
   StoredBackupFile,
 } from "../ports/backup-file-store.js";
 import type { DomainRepository } from "../ports/domain-repository.js";
+import { assertNoDuplicateJsonKeys } from "./secure-json.js";
 
 export const PORTABLE_BACKUP_FORMAT = "AHORRO_PERSONAL_BACKUP";
 export const PORTABLE_BACKUP_ENVELOPE_VERSION = 1;
@@ -197,6 +198,31 @@ export class BackupService {
     return { contents, checksum };
   }
 
+  async #writeVerifiedEnvelope(
+    displayName: string,
+    contents: string,
+    expectedChecksum: string,
+  ): Promise<StoredBackupFile> {
+    const stored = await this.#files.writeAtomic(displayName, contents);
+    try {
+      const selected = await this.#files.readSelected(stored.reference);
+      const verified = await this.#parseEnvelope(selected.contents);
+      if (
+        selected.sizeBytes !== stored.sizeBytes ||
+        verified.checksum !== expectedChecksum
+      ) {
+        throw new Error("La copia escrita no coincide con el sobre original.");
+      }
+    } catch {
+      await this.#files.deleteStored(stored.reference).catch(() => undefined);
+      throw new PersistenceError(
+        "FILE_OPERATION_FAILED",
+        "La copia local no pudo verificarse después de escribirla.",
+      );
+    }
+    return stored;
+  }
+
   #metadata(
     operation: BackupMetadata["operation"],
     snapshot: DomainSnapshotV1,
@@ -239,9 +265,10 @@ export class BackupService {
     const envelope = await this.#createEnvelope(snapshot);
     const displayName =
       `ahorro-personal-${fileDate(now)}-${this.#ids.nextId()}.json`;
-    const stored = await this.#files.writeAtomic(
+    const stored = await this.#writeVerifiedEnvelope(
       displayName,
       envelope.contents,
+      envelope.checksum,
     );
     const metadata = this.#metadata(
       "EXPORT",
@@ -267,6 +294,7 @@ export class BackupService {
     }
     let candidate: unknown;
     try {
+      assertNoDuplicateJsonKeys(contents);
       candidate = JSON.parse(contents);
     } catch {
       throw new PersistenceError(
@@ -317,6 +345,7 @@ export class BackupService {
   }
 
   public async previewImport(reference: string): Promise<ImportPreview> {
+    this.#pendingImports.clear();
     const selected = await this.#files.readSelected(reference);
     const { snapshot, checksum } = await this.#parseEnvelope(selected.contents);
     const token = this.#ids.nextId();
@@ -390,9 +419,10 @@ export class BackupService {
       const rollbackEnvelope = await this.#createEnvelope(current);
       const rollbackName =
         `ahorro-personal-respaldo-${fileDate(now)}-${this.#ids.nextId()}.json`;
-      rollbackBackup = await this.#files.writeAtomic(
+      rollbackBackup = await this.#writeVerifiedEnvelope(
         rollbackName,
         rollbackEnvelope.contents,
+        rollbackEnvelope.checksum,
       );
       rollbackMetadata = this.#metadata(
         "AUTO_BACKUP",

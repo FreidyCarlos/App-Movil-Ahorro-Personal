@@ -1,9 +1,9 @@
 # Criterios de aceptación
 
-Fecha: 1 de agosto de 2026. Estos criterios definen el resultado del MVP; la
+Fecha: 3 de agosto de 2026. Estos criterios definen el resultado del MVP; la
 evidencia móvil disponible alcanza el cierre complementario de Fase 4 con un
-development APK y un APK `preview` autónomo interno en Android 16. La Fase 5
-canónica de seguridad y robustez continúa pendiente.
+development APK y un APK `preview` autónomo interno en Android 16. La ejecución
+técnica de Fase 5 quedó verificada localmente y pendiente de publicación.
 
 ## Producto y metas
 
@@ -152,8 +152,10 @@ En Fase 3 se verificaron consultas parametrizadas, transacciones, errores
 seguros, archivos limitados y ausencia de secretos. Fase 4 añadió logs
 filtrados por proceso y un development build. La validación complementaria
 añadió un APK `preview` autónomo interno sin Metro. La revisión sistemática de
-seguridad y robustez corresponde a Fase 5; la compilación de producción, a
-Fase 7.
+seguridad y robustez de Fase 5 confirmó ausencia de logging productivo, red
+propia, WebView y ejecución dinámica; bloqueó permisos innecesarios y respaldos
+Android, reforzó archivos manipulados y recuperación, y mantuvo 0 hallazgos
+altos o críticos. CA-076 continúa reservado para Fase 7.
 
 ## Experiencia y accesibilidad futuras
 
@@ -251,7 +253,7 @@ logs limitados al proceso. El resultado aprueba esta compilación como APK
 autónomo interno, pero no satisface por sí solo CA-076 ni valida una compilación
 de producción, AAB, distribución o iOS.
 
-Esta evidencia tampoco cierra la Fase 5 canónica. Antes de avanzar a validación
-visual o producción deben completarse el análisis de dependencias, permisos,
-logs, archivos manipulados, límites, almacenamiento, modelo de amenazas y
-recuperación definidos para Seguridad y robustez.
+Esta evidencia no cerraba por sí sola la Fase 5 canónica. La ejecución local
+posterior revisó dependencias, permisos, logs, archivos manipulados, límites,
+almacenamiento, modelo de amenazas y recuperación. Producción continúa fuera de
+este resultado y corresponde a Fase 7.

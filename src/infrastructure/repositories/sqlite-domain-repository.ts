@@ -48,6 +48,11 @@ interface CountRow extends SqlRow {
   readonly count: number;
 }
 
+interface DomainStateCountRow extends SqlRow {
+  readonly settings_count: number;
+  readonly other_count: number;
+}
+
 interface IndexedRow extends SqlRow {
   readonly id: string;
 }
@@ -844,10 +849,30 @@ export class SQLiteDomainRepository implements DomainRepository {
   }
 
   public async hasDomainState(): Promise<boolean> {
-    const row = await this.#database.get<CountRow>(
-      "SELECT COUNT(*) AS count FROM app_settings",
+    const row = await this.#database.get<DomainStateCountRow>(
+      `SELECT
+        (SELECT COUNT(*) FROM app_settings) AS settings_count,
+        (SELECT COUNT(*) FROM goals) +
+        (SELECT COUNT(*) FROM plan_configurations) +
+        (SELECT COUNT(*) FROM simple_configurations) +
+        (SELECT COUNT(*) FROM rate_definitions) +
+        (SELECT COUNT(*) FROM rate_periods) +
+        (SELECT COUNT(*) FROM product_configurations) +
+        (SELECT COUNT(*) FROM movements) +
+        (SELECT COUNT(*) FROM movement_revisions) +
+        (SELECT COUNT(*) FROM actual_period_closes) +
+        (SELECT COUNT(*) FROM backup_metadata) AS other_count`,
     );
-    return (row?.count ?? 0) > 0;
+    if (row?.settings_count === 1) {
+      return true;
+    }
+    if (row?.settings_count === 0 && row.other_count === 0) {
+      return false;
+    }
+    throw new PersistenceError(
+      "DATABASE_CORRUPT",
+      "La base local está incompleta. El archivo se conservó sin reinicializar.",
+    );
   }
 
   public async loadSnapshot(

@@ -1,7 +1,7 @@
 # Respaldos, exportación e importación
 
-Fecha: 31 de julio de 2026. Estado: flujo portable y reemplazo seguro de Fase 3
-implementados; selector y sistema de archivos comprobados en Android 9.
+Fecha: 3 de agosto de 2026. Estado: flujo portable y reemplazo seguro
+endurecidos en Fase 5; selector y sistema de archivos comprobados en Android.
 
 ## Formato portable
 
@@ -52,6 +52,9 @@ El tamaño se comprueba con metadatos antes de leer y otra vez sobre los bytes
 UTF-8. Luego se validan profundidad, esquema, IDs, relaciones, cantidades,
 tasas y equivalencias.
 
+Fase 5 añadió rechazo de claves JSON duplicadas, conteo UTF-8 sin reservar un
+arreglo por byte y rechazo temprano de colecciones que exceden sus límites.
+
 ## Exportación
 
 1. reconstruir el estado desde SQLite;
@@ -91,6 +94,9 @@ La selección no modifica datos financieros. El flujo:
 El token solo vive en memoria. Tras reiniciar la aplicación se debe seleccionar
 y revisar el archivo nuevamente.
 
+Solo puede existir una vista previa vigente. Seleccionar otra copia invalida el
+token anterior y evita acumular snapshots completos en memoria.
+
 ## Reemplazo completo seguro
 
 El MVP no combina historiales. Después de la confirmación explícita:
@@ -98,13 +104,17 @@ El MVP no combina historiales. Después de la confirmación explícita:
 1. volver a comprobar que existe una vista previa vigente;
 2. exportar automáticamente el estado actual;
 3. terminar de escribir el respaldo antes de tocar SQLite;
-4. iniciar una transacción exclusiva;
-5. eliminar el conjunto anterior dentro de esa transacción;
-6. insertar el snapshot validado con consultas parametrizadas;
-7. comprobar unicidad y claves foráneas;
-8. reconstruir y comparar el estado importado;
-9. registrar el respaldo automático y `IMPORT_REPLACE`;
-10. confirmar la transacción.
+4. releerlo y verificar formato, esquema, tamaño y checksum;
+5. iniciar una transacción exclusiva;
+6. eliminar el conjunto anterior dentro de esa transacción;
+7. insertar el snapshot validado con consultas parametrizadas;
+8. comprobar unicidad y claves foráneas;
+9. reconstruir y comparar el estado importado;
+10. registrar el respaldo automático y `IMPORT_REPLACE`;
+11. confirmar la transacción.
+
+Si la copia recién escrita no supera la verificación, se retira únicamente ese
+archivo inválido y SQLite permanece sin cambios.
 
 Un fallo en cualquier escritura o verificación provoca rollback. El estado
 anterior permanece en SQLite y el respaldo externo, si alcanzó a crearse, se

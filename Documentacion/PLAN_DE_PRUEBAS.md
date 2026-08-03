@@ -301,9 +301,9 @@ aprobado como compilación autónoma interna. Esta prueba no cubre AAB,
 distribución, actualización sobre una instalación con otra firma, iOS,
 accesibilidad ni recursos y rendimiento.
 
-Esta evidencia no completa la Fase 5 canónica del proyecto. La Fase 5 comienza
-con la revisión sistemática de seguridad y robustez definida por el prompt
-madre; no requiere generar otro build para iniciar.
+Esta evidencia no completaba por sí sola la Fase 5 canónica del proyecto. La
+revisión sistemática posterior de seguridad y robustez se ejecutó sin generar
+otro build.
 
 ## Suite de Fase 2
 
@@ -406,21 +406,47 @@ incluye defensas de plataforma difíciles de forzar sin dobles de prueba
 irreales. Las ramas financieras conservan su cobertura y las pruebas nuevas se
 concentran en corrupción o pérdida de datos.
 
+## Ejecución de Fase 5 — Seguridad y robustez
+
+Consulta: 3 de agosto de 2026. La ejecución agrupada añadió y verificó:
+
+- configuración Android sin respaldo automático y con bloqueo de permisos
+  heredados de almacenamiento y vibración;
+- auditoría completa y auditoría separada del árbol de producción;
+- ausencia de logging, red propia, WebView y ejecución dinámica en `src/`;
+- rechazo de claves JSON duplicadas y colecciones excesivas antes del esquema;
+- una sola vista previa de importación vigente;
+- tamaño UTF-8 medido sin asignación proporcional por byte;
+- verificación posterior de exportaciones y respaldos automáticos;
+- conservación de una base incompleta sin reinicialización silenciosa;
+- fallos deterministas de archivo y SQLite sin provocar falta real de espacio.
+
+Resultados:
+
+| Control | Resultado |
+|---|---|
+| `npm run check` | aprobado |
+| TypeScript portable y móvil | aprobado |
+| Suite | 14 archivos, 131 pruebas aprobadas |
+| Cobertura | 86,18 % sentencias; 77,62 % ramas; 84,98 % funciones; 86,44 % líneas |
+| Build portable y Node | aprobado |
+| `npm audit --omit=dev --audit-level=moderate` | 0 hallazgos |
+| Auditoría completa | 11 moderados; 0 altos; 0 críticos |
+| Expo config introspectada | `allowBackup=false` y tres permisos bloqueados |
+| Moto X4 | versión, banderas y permisos consultados sin abrir la app ni modificar datos |
+
+El APK instalado era el development build histórico, depurable y con
+`versionCode 7`; no valida el manifiesto endurecido ni producción. No se generó
+otro build. Los límites máximos siguen pendientes de medición física con archivo
+real; no se ejecutó falta de espacio ni presión deliberada de memoria.
+
 ## Pendiente por fase
 
 ### Fase 5 — Seguridad y robustez
 
-- actualizar el análisis de dependencias y revisar hallazgos transitivos;
-- revisar permisos, almacenamiento local, política de respaldos y logs;
-- probar archivos manipulados, tamaños, profundidad, claves desconocidas y
-  entradas maliciosas sin ejecutar contenido;
-- comprobar límites y recuperación ante corrupción, importación fallida y
-  escrituras interrumpidas con pruebas seguras y proporcionadas;
-- actualizar el modelo de amenazas con la evidencia confirmada;
-- reutilizar las pruebas ya válidas de logs, persistencia y JSON inválido sin
-  repetir pruebas físicas innecesarias;
-- solicitar autorización específica antes de provocar falta real de espacio,
-  borrar datos, desinstalar o modificar la instalación cotidiana.
+- ejecución técnica completada localmente; pendiente de revisión y publicación;
+- mantener los límites como provisionales hasta una medición física autorizada;
+- repetir auditoría y validar manifiesto no depurable en Fase 7.
 
 ### Fase 6 — Validación visual y accesibilidad
 

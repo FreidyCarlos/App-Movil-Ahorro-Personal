@@ -1,7 +1,7 @@
 # Migraciones y operación segura de SQLite
 
-Fecha: 31 de julio de 2026. Estado: esquema inicial de Fase 3 implementado,
-probado con SQLite real y comprobado en Android 9 mediante `expo-sqlite`.
+Fecha: 3 de agosto de 2026. Estado: esquema inicial implementado y recuperación
+endurecida en Fase 5; probado con SQLite real y `expo-sqlite` en Android.
 
 ## Objetivo
 
@@ -140,6 +140,8 @@ todo el reemplazo.
   anterior.
 - Una migración interrumpida no deja sus tablas ni su versión parcial.
 - Una relación huérfana o carga JSON inválida se reporta como corrupción.
+- Si falta `app_settings` pero existe cualquier otra fila de dominio, la base se
+  bloquea como incompleta y nunca se inicializa como vacía.
 - La base no se borra aunque `quick_check` falle.
 - Falta de espacio o bloqueo se presenta con un error seguro, sin SQL, trazas o
   rutas en la interfaz.

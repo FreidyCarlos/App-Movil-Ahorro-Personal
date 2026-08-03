@@ -14,6 +14,14 @@ Expo/React Native inicial, formulario de meta simple, adaptadores móviles de
 SQLite y archivos, un development APK generado con EAS y un APK `preview`
 aprobado como compilación autónoma interna.
 
+La Fase 5 ejecutó la revisión local de seguridad y robustez: dependencias,
+permisos, logs, archivos manipulados, límites, almacenamiento, recuperación y
+modelo de amenazas. La configuración futura deshabilita el respaldo automático
+de Android y bloquea permisos heredados de almacenamiento; las copias recién
+escritas se verifican antes de proteger una importación y una base incompleta ya
+no puede confundirse con una instalación nueva. El cierre está pendiente de
+revisión y publicación; no se generó otro APK.
+
 El núcleo calcula proyecciones simples y avanzadas, normaliza tasas, reconstruye
 movimientos reales, genera cierres, compara proyectado frente a real y valida
 una representación JSON de dominio. La integración usa SQLite real en pruebas
@@ -49,11 +57,10 @@ herramientas de desarrollo, y los logs limitados al proceso no registraron
 APK como compilación autónoma interna; no equivale todavía a una compilación de
 producción ni a autorización de distribución.
 
-Estas validaciones físicas complementan el cierre de la aplicación móvil, pero
-no completan la Fase 5 canónica. El siguiente hito es **Seguridad y robustez**:
-dependencias, permisos, logs, archivos manipulados, límites, almacenamiento,
-modelo de amenazas y recuperación. La validación visual corresponde a Fase 6 y
-la validación funcional completa con compilación de producción, a Fase 7.
+Estas validaciones físicas complementan el cierre de la aplicación móvil. La
+revisión técnica de **Seguridad y robustez** se ejecutó después, sin convertir
+el APK interno en producción. La validación visual corresponde a Fase 6 y la
+validación funcional completa con compilación de producción, a Fase 7.
 
 El entrypoint móvil de entrega es `expo-router/entry` y usa las rutas de
 `src/app`. Los entrypoints creados exclusivamente para aislar V1–V6 fueron
@@ -178,6 +185,7 @@ automática de historiales queda fuera del MVP.
 - [Migraciones y SQLite](Documentacion/MIGRACIONES.md)
 - [Respaldos e importación](Documentacion/RESPALDOS_E_IMPORTACION.md)
 - [Modelo de amenazas](Documentacion/MODELO_DE_AMENAZAS.md)
+- [Seguridad y robustez — Fase 5](Documentacion/SEGURIDAD_Y_ROBUSTEZ.md)
 
 La documentación pública del proyecto se mantiene en `Documentacion/`.
 

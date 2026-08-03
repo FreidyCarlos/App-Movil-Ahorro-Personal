@@ -1,7 +1,7 @@
 # Modelo de amenazas
 
-Fecha: 30 de julio de 2026. Estado: modelo inicial actualizado con los controles
-de Fase 3. La revisión completa de compilación móvil corresponde a la Fase 5.
+Fecha: 3 de agosto de 2026. Estado: actualizado con la ejecución técnica de
+Fase 5. La revisión del artefacto de producción corresponde a Fase 7.
 
 ## Alcance y activos
 
@@ -44,6 +44,7 @@ huérfanas, duplicados, tasa manipulada, versión falsa o checksum diferente.
 Controles:
 
 - límite antes y después de lectura;
+- rechazo de claves JSON duplicadas antes de deserializar;
 - esquema Zod cerrado;
 - profundidad iterativa;
 - IDs únicos y relaciones completas;
@@ -51,6 +52,7 @@ Controles:
 - límites de montos y tasas;
 - SHA-256 contra daño;
 - confirmación y token temporal;
+- una sola vista previa vigente en memoria;
 - transacción con rollback.
 
 Riesgo residual: SHA-256 no autentica al autor. Una persona puede reconstruir un
@@ -93,12 +95,15 @@ cálculos extremos.
 Controles:
 
 - 10 MiB, profundidad 20 y máximos de colecciones;
+- rechazo de colecciones excesivas antes de la validación detallada;
+- conteo UTF-8 sin reservar un arreglo por cada byte;
 - esquemas con longitudes;
 - techos de montos y tasas;
 - rechazo de no finitos;
 - archivos regulares y ubicaciones autorizadas en el adaptador de pruebas.
 
-Riesgo residual: los límites deben medirse en un Android de gama baja.
+Riesgo residual: los límites siguen pendientes de una medición con archivo real
+en Android de gama baja; no se provocó presión real de memoria.
 
 ### Pérdida o acceso al dispositivo
 
@@ -108,11 +113,12 @@ Controles actuales:
 
 - datos mínimos y ausencia de credenciales;
 - documentación explícita de falta de cifrado;
+- respaldo automático Android deshabilitado en la configuración;
 - nombres de archivos sin rutas persistidas;
 - logs financieros prohibidos.
 
-Riesgo residual alto: no existen todavía PIN, biometría, SQLCipher ni una
-decisión sobre respaldo automático del sistema operativo.
+Riesgo residual alto: no existen todavía PIN, biometría ni SQLCipher. Una copia
+compartida manualmente puede salir del sandbox y queda bajo custodia del usuario.
 
 ### Fallo de almacenamiento
 
@@ -123,6 +129,7 @@ Controles:
 - escritura temporal y publicación sin sobrescritura;
 - sincronización antes de publicar;
 - respaldo terminado antes del reemplazo;
+- relectura, validación y checksum del respaldo recién escrito;
 - transacción y verificación antes de commit;
 - el respaldo se conserva si falla el reemplazo.
 
@@ -133,21 +140,29 @@ Controles actuales:
 - versiones exactas en `package-lock.json`;
 - sin nueva dependencia SQLite de terceros para las pruebas Node;
 - `npm audit --audit-level=high`;
+- auditoría separada del árbol de producción, sin hallazgos conocidos;
 - dominio sin red, DOM, React, Expo o SQLite.
 
-Pendiente:
+Resultado de Fase 5:
 
-- análisis estático móvil;
-- revisión de permisos;
-- revisión de scripts de instalación;
-- compilación firmada y proceso de actualización.
+- 11 hallazgos moderados concentrados en herramientas Expo y cero altos o
+  críticos; la ruta concreta termina en `xcode -> uuid@7.0.3`;
+- no se aplicó la degradación incompatible sugerida por el arreglo forzado;
+- permisos heredados de almacenamiento y vibración bloqueados;
+- respaldo Android deshabilitado;
+- scripts de instalación activos no encontrados en el entorno Windows.
+
+Pendiente para Fase 7: manifiesto de producción, firma, ausencia de depuración y
+proceso de actualización.
 
 ### Logs y errores
 
 Los errores públicos usan códigos cerrados y mensajes sin SQL, rutas, contenido
 financiero o trazas. Las pruebas no deben imprimir snapshots completos.
 
-La política de logging móvil se implementará y auditará en Fases 4 y 5.
+Fase 5 confirmó que `src/` no contiene llamadas de logging. Los únicos tokens
+son identificadores efímeros de confirmación y los mensajes públicos siguen
+siendo cerrados. Los logs del artefacto de producción se revisarán en Fase 7.
 
 ## Controles expresamente ausentes
 

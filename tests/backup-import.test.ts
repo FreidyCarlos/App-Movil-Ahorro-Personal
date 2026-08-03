@@ -75,6 +75,39 @@ class FailingWriteStore implements BackupFileStore {
   public async readSelected(reference: string): Promise<SelectedBackupFile> {
     return this.#delegate.readSelected(reference);
   }
+
+  public async deleteStored(reference: string): Promise<void> {
+    return this.#delegate.deleteStored(reference);
+  }
+}
+
+class CorruptingWriteStore implements BackupFileStore {
+  readonly #delegate: BackupFileStore;
+  public lastWrittenReference: string | undefined;
+
+  public constructor(delegate: BackupFileStore) {
+    this.#delegate = delegate;
+  }
+
+  public async writeAtomic(
+    displayName: string,
+    contents: string,
+  ): Promise<StoredBackupFile> {
+    const stored = await this.#delegate.writeAtomic(
+      displayName,
+      contents.replace("La proyección", "Xa proyección"),
+    );
+    this.lastWrittenReference = stored.reference;
+    return stored;
+  }
+
+  public async readSelected(reference: string): Promise<SelectedBackupFile> {
+    return this.#delegate.readSelected(reference);
+  }
+
+  public async deleteStored(reference: string): Promise<void> {
+    return this.#delegate.deleteStored(reference);
+  }
 }
 
 interface TestEnvironment {
@@ -353,6 +386,60 @@ describe("exportación e importación portable", () => {
     }
   });
 
+  it("rechaza claves JSON duplicadas aunque usen escapes equivalentes", async () => {
+    const testEnvironment = await environment();
+    try {
+      const backupService = service(testEnvironment);
+      await testEnvironment.repository.replaceSnapshot(
+        persistenceSnapshot("Sin ambigüedad"),
+      );
+      const exported = await backupService.exportPortableBackup();
+      const contents = await readFile(exported.reference, "utf8");
+      const duplicated = contents.replace(
+        `"format":"${PORTABLE_BACKUP_FORMAT}"`,
+        `"format":"${PORTABLE_BACKUP_FORMAT}","\\u0066ormat":"${PORTABLE_BACKUP_FORMAT}"`,
+      );
+      const file = await testEnvironment.files.writeAtomic(
+        "duplicate-key.json",
+        duplicated,
+      );
+      await expect(
+        backupService.previewImport(file.reference),
+      ).rejects.toMatchObject({ code: "BACKUP_FILE_INVALID" });
+      expect((await testEnvironment.repository.listGoals())[0]?.name).toBe(
+        "Sin ambigüedad",
+      );
+    } finally {
+      await closeAndRemove(testEnvironment);
+    }
+  });
+
+  it("mantiene una sola vista previa vigente para acotar memoria y reintentos", async () => {
+    const testEnvironment = await environment();
+    try {
+      const backupService = service(testEnvironment);
+      await testEnvironment.repository.replaceSnapshot(
+        persistenceSnapshot("Primera"),
+      );
+      const firstFile = await backupService.exportPortableBackup();
+      await testEnvironment.repository.replaceSnapshot(
+        persistenceSnapshot("Segunda"),
+      );
+      const secondFile = await backupService.exportPortableBackup();
+      const first = await backupService.previewImport(firstFile.reference);
+      const second = await backupService.previewImport(secondFile.reference);
+
+      await expect(
+        backupService.replaceFromPreview(first.confirmationToken, true),
+      ).rejects.toMatchObject({ code: "IMPORT_PREVIEW_EXPIRED" });
+      await expect(
+        backupService.replaceFromPreview(second.confirmationToken, false),
+      ).rejects.toMatchObject({ code: "IMPORT_CONFIRMATION_REQUIRED" });
+    } finally {
+      await closeAndRemove(testEnvironment);
+    }
+  });
+
   it("no modifica SQLite cuando falla el respaldo automático", async () => {
     const testEnvironment = await environment();
     try {
@@ -373,6 +460,35 @@ describe("exportación e importación portable", () => {
       expect((await testEnvironment.repository.listGoals())[0]?.name).toBe(
         "Estado conservado",
       );
+    } finally {
+      await closeAndRemove(testEnvironment);
+    }
+  });
+
+  it("no reemplaza SQLite si el respaldo escrito no supera la verificación", async () => {
+    const testEnvironment = await environment();
+    try {
+      const workingService = service(testEnvironment);
+      await testEnvironment.repository.replaceSnapshot(
+        persistenceSnapshot("Estado verificable"),
+      );
+      const imported = await workingService.exportPortableBackup();
+      const corruptingStore = new CorruptingWriteStore(testEnvironment.files);
+      const corruptingService = service(
+        testEnvironment,
+        corruptingStore,
+        new SequenceIds(700),
+      );
+      const preview = await corruptingService.previewImport(imported.reference);
+      await expect(
+        corruptingService.replaceFromPreview(preview.confirmationToken, true),
+      ).rejects.toMatchObject({ code: "FILE_OPERATION_FAILED" });
+      expect((await testEnvironment.repository.listGoals())[0]?.name).toBe(
+        "Estado verificable",
+      );
+      await expect(
+        testEnvironment.files.readSelected(corruptingStore.lastWrittenReference!),
+      ).rejects.toMatchObject({ code: "FILE_OPERATION_FAILED" });
     } finally {
       await closeAndRemove(testEnvironment);
     }

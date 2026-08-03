@@ -173,4 +173,22 @@ export class SafeNodeBackupFileStore implements BackupFileStore {
       );
     }
   }
+
+  public async deleteStored(reference: string): Promise<void> {
+    const resolved = resolve(reference);
+    if (!isInside(this.#exportDirectory, resolved)) {
+      throw new PersistenceError(
+        "BACKUP_FILE_INVALID",
+        "La copia que se intentó retirar no pertenece al almacén privado.",
+      );
+    }
+    try {
+      await rm(resolved, { force: true });
+    } catch {
+      throw new PersistenceError(
+        "FILE_OPERATION_FAILED",
+        "No fue posible retirar una copia local inválida.",
+      );
+    }
+  }
 }
