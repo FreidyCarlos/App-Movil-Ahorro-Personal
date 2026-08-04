@@ -16,6 +16,7 @@ import {
   type GoalDetailView,
   type GoalSummaryView,
   type RegisterMovementInput,
+  type ReviseMovementInput,
   type ReviseAdvancedContributionInput,
   type ConvertAdvancedGoalToSimpleInput,
   type CreateSimpleGoalInput,
@@ -80,6 +81,7 @@ export interface MobileRuntime {
   createAdvancedGoal(input: ValidAdvancedGoalInput): Promise<GoalDetailView>;
   getGoal(goalId: string): Promise<GoalDetailView>;
   registerMovement(input: RegisterMovementInput): Promise<GoalDetailView>;
+  reviseMovement(input: ReviseMovementInput): Promise<GoalDetailView>;
   voidMovement(goalId: string, movementId: string, reason: string): Promise<GoalDetailView>;
   changeGoalStatus(goalId: string, status: GoalStatus): Promise<GoalDetailView>;
   closeActualPeriod(goalId: string, periodEnd: string): Promise<GoalDetailView>;
@@ -143,6 +145,7 @@ export async function createMobileRuntime(): Promise<MobileRuntime> {
     createAdvancedGoal: (input) => savings.createAdvancedGoal(input),
     getGoal: (goalId) => savings.getGoal(goalId),
     registerMovement: (input) => savings.registerMovement(input),
+    reviseMovement: (input) => savings.reviseMovement(input),
     voidMovement: (goalId, movementId, reason) =>
       savings.voidMovement(goalId, movementId, reason),
     changeGoalStatus: (goalId, status) =>

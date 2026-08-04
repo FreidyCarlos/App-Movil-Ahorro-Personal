@@ -6,9 +6,12 @@ import RegisterMovementScreen from "../src/app/goal/[id]/register";
 
 const mockReplace = jest.fn();
 const mockBack = jest.fn();
+const mockPush = jest.fn();
+let mockMovementId: string | undefined;
 const mockCreateSimpleGoal = jest.fn(async () => undefined);
 const mockCreateAdvancedGoal = jest.fn(async () => undefined);
 const mockRegisterMovement = jest.fn(async () => ({ id: "goal-1" }));
+const mockReviseMovement = jest.fn(async () => ({ id: "goal-1" }));
 const mockReviseAdvancedContribution = jest.fn(async () => mockGoalDetail);
 const mockConvertAdvancedGoalToSimple = jest.fn(async () => mockGoalDetail);
 const mockVoidMovement = jest.fn(async () => mockGoalDetail);
@@ -54,8 +57,11 @@ const mockGoalDetail = {
 };
 
 jest.mock("expo-router", () => ({
-  useRouter: () => ({ replace: mockReplace, back: mockBack, push: jest.fn() }),
-  useLocalSearchParams: () => ({ id: "00000000-0000-4000-8000-000000000001" }),
+  useRouter: () => ({ replace: mockReplace, back: mockBack, push: mockPush }),
+  useLocalSearchParams: () => ({
+    id: "00000000-0000-4000-8000-000000000001",
+    ...(mockMovementId === undefined ? {} : { movementId: mockMovementId }),
+  }),
   useFocusEffect: (callback: () => void) => {
     const React = jest.requireActual<typeof import("react")>("react");
     React.useEffect(callback, []);
@@ -68,6 +74,7 @@ jest.mock("../src/mobile/presentation/app-provider.js", () => ({
     createSimpleGoal: mockCreateSimpleGoal,
     createAdvancedGoal: mockCreateAdvancedGoal,
     registerMovement: mockRegisterMovement,
+    reviseMovement: mockReviseMovement,
     getGoal: mockGetGoal,
     changeGoalStatus: jest.fn(async () => mockGoalDetail),
     closeActualPeriod: jest.fn(async () => mockGoalDetail),
@@ -89,6 +96,7 @@ async function completeBasicGoal() {
 describe("formulario móvil de metas", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockMovementId = undefined;
   });
 
   it("crea primero una meta simple sin exponer campos avanzados", async () => {
@@ -162,6 +170,7 @@ describe("formulario móvil de metas", () => {
 describe("registro móvil de realidad", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockMovementId = undefined;
   });
 
   it("exige explicación para un ajuste y envía el movimiento confirmado", async () => {
@@ -196,11 +205,50 @@ describe("registro móvil de realidad", () => {
     );
     expect(mockBack).toHaveBeenCalledTimes(1);
   });
+
+  it("precarga y corrige un movimiento sólo después de exigir un motivo", async () => {
+    mockMovementId = mockGoalDetail.movements[0]?.id;
+    await render(<RegisterMovementScreen />);
+    await screen.findByText("Corrige sin borrar el pasado.");
+    await waitFor(() =>
+      expect(screen.getByLabelText("Monto del movimiento").props.value).toBe(
+        "200000",
+      ),
+    );
+
+    await fireEvent.changeText(
+      screen.getByLabelText("Monto del movimiento"),
+      "210000",
+    );
+    await fireEvent.press(screen.getByText("Guardar corrección"));
+    expect(mockReviseMovement).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("Explica el motivo de la corrección."),
+    ).toBeTruthy();
+
+    await fireEvent.changeText(
+      screen.getByLabelText("Motivo de la corrección"),
+      "Monto verificado",
+    );
+    await fireEvent.press(screen.getByText("Guardar corrección"));
+    await waitFor(() =>
+      expect(mockReviseMovement).toHaveBeenCalledWith({
+        goalId: mockGoalDetail.id,
+        movementId: mockGoalDetail.movements[0]?.id,
+        type: "CONTRIBUTION",
+        amount: "210000",
+        effectiveDate: "2026-02-01",
+        reason: "Monto verificado",
+      }),
+    );
+    expect(mockBack).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("detalle móvil auditable", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockMovementId = undefined;
   });
 
   it("crea una revisión con aporte, vigencia y motivo explícitos", async () => {
@@ -243,5 +291,18 @@ describe("detalle móvil auditable", () => {
         "Registro duplicado",
       ),
     );
+  });
+
+  it("abre la corrección desde el movimiento activo", async () => {
+    await render(<GoalDetailScreen />);
+    await screen.findByText("Historial");
+    await fireEvent.press(screen.getByText("Corregir con trazabilidad"));
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: "/goal/[id]/register",
+      params: {
+        id: mockGoalDetail.id,
+        movementId: mockGoalDetail.movements[0]?.id,
+      },
+    });
   });
 });

@@ -243,6 +243,64 @@ describe("recorrido funcional avanzado sobre SQLite real", () => {
     expect(detail.latestClose).toBeUndefined();
   });
 
+  it("corrige un movimiento con una nueva revisión e invalida el cierre afectado", async () => {
+    const validation = advancedForm();
+    expect(validation.success).toBe(true);
+    if (!validation.success) return;
+    let detail = await service.createAdvancedGoal(validation.data);
+    detail = await service.registerMovement({
+      goalId: detail.id,
+      type: "CONTRIBUTION",
+      amount: "200",
+      effectiveDate: "2026-01-15",
+      note: "Valor inicialmente registrado",
+    });
+    const movement = detail.movements[0];
+    expect(movement).toBeDefined();
+    detail = await service.closeActualPeriod(detail.id, "2026-02-01");
+    expect(detail.latestClose).toBeDefined();
+
+    detail = await service.reviseMovement({
+      goalId: detail.id,
+      movementId: movement?.id ?? "",
+      type: "EXTRA_CONTRIBUTION",
+      amount: "250",
+      effectiveDate: "2026-01-20",
+      note: "Valor verificado",
+      reason: "Corrección contra el registro original",
+    });
+
+    expect(detail.actualBalance).toBe("350");
+    expect(detail.actualContributions).toBe("0");
+    expect(detail.actualExtraContributions).toBe("250");
+    expect(detail.latestClose).toBeUndefined();
+    expect(detail.movements[0]).toMatchObject({
+      id: movement?.id,
+      type: "EXTRA_CONTRIBUTION",
+      amount: "250",
+      effectiveDate: "2026-01-20",
+      note: "Valor verificado",
+      status: "ACTIVE",
+    });
+
+    const snapshot = await repository.loadSnapshot({
+      appVersion: "0.1.0",
+      rulesVersion: "financial-rules-1",
+      exportedAt: NOW,
+    });
+    const revisions = snapshot.movementRevisions
+      .filter(({ movementId }) => movementId === movement?.id)
+      .sort((left, right) => left.revisionNumber - right.revisionNumber);
+    expect(revisions).toHaveLength(2);
+    expect(revisions[0]?.snapshot.amount).toBe("200");
+    expect(revisions[1]).toMatchObject({
+      revisionNumber: 2,
+      reason: "Corrección contra el registro original",
+      supersedesId: revisions[0]?.id,
+    });
+    expect(revisions[1]?.snapshot.amount).toBe("250");
+  });
+
   it("cambia estados sin eliminar la meta ni sus movimientos", async () => {
     const validation = advancedForm();
     expect(validation.success).toBe(true);
@@ -272,6 +330,15 @@ describe("recorrido funcional avanzado sobre SQLite real", () => {
       type: "CONTRIBUTION",
       amount: "200",
       effectiveDate: "2026-01-15",
+    });
+    const registeredMovement = detail.movements[0];
+    detail = await service.reviseMovement({
+      goalId: detail.id,
+      movementId: registeredMovement?.id ?? "",
+      type: "CONTRIBUTION",
+      amount: "250",
+      effectiveDate: "2026-01-15",
+      reason: "Valor confirmado antes del cierre",
     });
     detail = await service.closeActualPeriod(detail.id, "2026-02-01");
     detail = await service.reviseAdvancedContribution({
@@ -319,7 +386,18 @@ describe("recorrido funcional avanzado sobre SQLite real", () => {
     expect(restored.status).toBe("ACTIVE");
     expect(restored.configurationRevisionNumber).toBe(2);
     expect(restored.movements).toHaveLength(1);
+    expect(restored.movements[0]?.amount).toBe("250");
     expect(restored.originalProjection?.finalBalance).toBe("700");
+    const restoredSnapshot = await repository.loadSnapshot({
+      appVersion: "0.1.0",
+      rulesVersion: "financial-rules-1",
+      exportedAt: NOW,
+    });
+    expect(
+      restoredSnapshot.movementRevisions.filter(
+        ({ movementId }) => movementId === registeredMovement?.id,
+      ),
+    ).toHaveLength(2);
   });
 
   it("revisa un supuesto con motivo y vigencia y conserva la ruta avanzada al pasar a simple", async () => {
@@ -401,6 +479,42 @@ describe("casos de uso avanzados antes del adaptador", () => {
       effectiveDate: "2026-01-15",
     });
     expect(detail.actualBalance).toBe("200");
+  });
+
+  it("mantiene un snapshot válido al corregir un movimiento", async () => {
+    let nextId = 600;
+    const service = new MobileSavingsService(
+      new MemoryRepository(
+        createEmptyDomainSnapshot({
+          appVersion: "0.1.0",
+          rulesVersion: "financial-rules-1",
+          now: NOW,
+          settingsId: id(599),
+        }),
+      ),
+      { now: () => NOW, today: () => "2026-01-10" },
+      { nextId: () => id(nextId++) },
+      { appVersion: "0.1.0", rulesVersion: "financial-rules-1" },
+    );
+    const validation = advancedForm();
+    expect(validation.success).toBe(true);
+    if (!validation.success) return;
+    let detail = await service.createAdvancedGoal(validation.data);
+    detail = await service.registerMovement({
+      goalId: detail.id,
+      type: "CONTRIBUTION",
+      amount: "100",
+      effectiveDate: "2026-01-15",
+    });
+    detail = await service.reviseMovement({
+      goalId: detail.id,
+      movementId: detail.movements[0]?.id ?? "",
+      type: "CONTRIBUTION",
+      amount: "125",
+      effectiveDate: "2026-01-15",
+      reason: "Valor verificado",
+    });
+    expect(detail.actualBalance).toBe("225");
   });
 
   it("mantiene relaciones válidas al crear una revisión de supuestos", async () => {

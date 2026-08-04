@@ -237,7 +237,7 @@ export function createMovementRevision(
     id: metadata.id,
     movementId: previous.id,
     revisionNumber: metadata.revisionNumber,
-    snapshot: replacement,
+    snapshot: { ...replacement },
     reason: metadata.reason,
     createdAt: metadata.createdAt,
     ...(metadata.supersedesId === undefined

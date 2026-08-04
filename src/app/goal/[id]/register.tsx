@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -36,15 +36,50 @@ const TYPES: readonly { readonly value: MovementType; readonly label: string; re
 ];
 
 export default function RegisterMovementScreen() {
-  const { id } = useLocalSearchParams<{ readonly id: string }>();
+  const { id, movementId } = useLocalSearchParams<{
+    readonly id: string;
+    readonly movementId?: string;
+  }>();
   const router = useRouter();
   const colors = useAppColors();
-  const { registerMovement, busy } = useApp();
+  const { getGoal, registerMovement, reviseMovement, busy } = useApp();
   const [type, setType] = useState<MovementType>("CONTRIBUTION");
   const [amount, setAmount] = useState("");
   const [effectiveDate, setEffectiveDate] = useState("");
   const [note, setNote] = useState("");
+  const [reason, setReason] = useState("");
   const [error, setError] = useState<string>();
+  const [loadingCorrection, setLoadingCorrection] = useState(false);
+  const editing = typeof movementId === "string" && movementId.length > 0;
+
+  useEffect(() => {
+    if (!editing || typeof id !== "string" || id.length === 0) return;
+    let active = true;
+    setLoadingCorrection(true);
+    void getGoal(id)
+      .then((detail) => {
+        const movement = detail.movements.find(
+          (candidate) => candidate.id === movementId,
+        );
+        if (movement === undefined || movement.status !== "ACTIVE") {
+          throw new Error("El movimiento no está disponible para corrección.");
+        }
+        if (!active) return;
+        setType(movement.type);
+        setAmount(movement.amount);
+        setEffectiveDate(movement.effectiveDate);
+        setNote(movement.note ?? "");
+      })
+      .catch(() => {
+        if (active) setError("No fue posible preparar esta corrección.");
+      })
+      .finally(() => {
+        if (active) setLoadingCorrection(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [editing, getGoal, id, movementId]);
 
   const validation = useMemo(() => {
     if (typeof id !== "string" || id.length === 0) return "La meta no es válida.";
@@ -55,8 +90,9 @@ export default function RegisterMovementScreen() {
       return "Escribe un monto entero mayor que cero.";
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveDate.trim())) return "Usa una fecha con formato AAAA-MM-DD.";
+    if (editing && reason.trim().length === 0) return "Explica el motivo de la corrección.";
     return undefined;
-  }, [amount, effectiveDate, id, note, type]);
+  }, [amount, editing, effectiveDate, id, note, reason, type]);
 
   const submit = async () => {
     if (validation !== undefined || typeof id !== "string") {
@@ -65,23 +101,40 @@ export default function RegisterMovementScreen() {
     }
     try {
       setError(undefined);
-      await registerMovement({
+      const common = {
         goalId: id,
         type,
         amount: amount.trim(),
         effectiveDate: effectiveDate.trim(),
         ...(note.trim().length === 0 ? {} : { note: note.trim() }),
-      });
+      };
+      if (editing && typeof movementId === "string") {
+        await reviseMovement({
+          ...common,
+          movementId,
+          reason: reason.trim(),
+        });
+      } else {
+        await registerMovement(common);
+      }
       router.back();
     } catch {
-      setError("El movimiento no es válido para el saldo o producto actual.");
+      setError(
+        editing
+          ? "La corrección no es válida para el saldo o producto actual."
+          : "El movimiento no es válido para el saldo o producto actual.",
+      );
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" style={{ backgroundColor: colors.background }}>
       <View style={styles.container}>
-        <PageIntro eyebrow="Registro real" title="Anota lo que sí ocurrió." description="El plan no se convierte en ahorro hasta que confirmas un movimiento." />
+        <PageIntro
+          eyebrow={editing ? "Corrección trazable" : "Registro real"}
+          title={editing ? "Corrige sin borrar el pasado." : "Anota lo que sí ocurrió."}
+          description={editing ? "La versión anterior se conserva y los cierres afectados dejan de considerarse vigentes." : "El plan no se convierte en ahorro hasta que confirmas un movimiento."}
+        />
 
         <View style={styles.section}>
           <SectionHeading title="Tipo de movimiento" description="Cada tipo mantiene su efecto separado en el desglose." />
@@ -142,6 +195,21 @@ export default function RegisterMovementScreen() {
             style={[styles.input, styles.note, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, color: colors.text }]}
             value={note}
           />
+          {editing ? (
+            <>
+              <Text style={[styles.label, { color: colors.text }]}>Motivo obligatorio de la corrección</Text>
+              <TextInput
+                accessibilityLabel="Motivo de la corrección"
+                maxLength={500}
+                multiline
+                onChangeText={setReason}
+                placeholder="Explica qué dato cambió"
+                placeholderTextColor={colors.muted}
+                style={[styles.input, styles.note, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, color: colors.text }]}
+                value={reason}
+              />
+            </>
+          ) : null}
         </View>
 
         {amount.length > 0 && /^-?\d+$/.test(amount) ? (
@@ -153,7 +221,11 @@ export default function RegisterMovementScreen() {
         ) : null}
 
         {error === undefined ? null : <StatusMessage tone="danger">{error}</StatusMessage>}
-        <AppButton disabled={busy} label={busy ? "Guardando…" : "Confirmar movimiento"} onPress={() => void submit()} />
+        <AppButton
+          disabled={busy || loadingCorrection}
+          label={busy || loadingCorrection ? "Guardando…" : editing ? "Guardar corrección" : "Confirmar movimiento"}
+          onPress={() => void submit()}
+        />
         <Text style={[styles.disclaimer, { color: colors.muted }]}>El ingreso personal no incrementa este saldo. La aplicación no mueve dinero ni consulta bancos.</Text>
       </View>
     </ScrollView>

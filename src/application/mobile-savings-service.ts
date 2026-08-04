@@ -3,7 +3,11 @@ import {
   calculateAdvancedProjection,
   type ProjectedEvent,
 } from "../domain/calculations/advanced-projection.js";
-import { calculateActualLedger, createActualPeriodClose } from "../domain/calculations/actual-ledger.js";
+import {
+  calculateActualLedger,
+  createActualPeriodClose,
+  createMovementRevision,
+} from "../domain/calculations/actual-ledger.js";
 import { compareProjectionWithActual } from "../domain/calculations/comparison.js";
 import {
   FINANCIAL_RULES_VERSION,
@@ -119,6 +123,11 @@ export interface RegisterMovementInput {
   readonly amount: string;
   readonly effectiveDate: string;
   readonly note?: string;
+}
+
+export interface ReviseMovementInput extends RegisterMovementInput {
+  readonly movementId: string;
+  readonly reason: string;
 }
 
 export interface ReviseAdvancedGoalInput extends ValidAdvancedGoalInput {
@@ -1354,6 +1363,97 @@ export class MobileSavingsService {
       };
     });
     return this.getGoal(goalId);
+  }
+
+  public async reviseMovement(
+    input: ReviseMovementInput,
+  ): Promise<GoalDetailView> {
+    const reason = input.reason.trim();
+    if (reason.length === 0) {
+      throw new Error("La corrección requiere un motivo.");
+    }
+    const now = this.#clock.now();
+    const revisionId = this.#ids.nextId();
+    await this.#repository.updateSnapshot(this.#header(), (current) => {
+      const goal = current.goals.find(
+        (candidate) => candidate.id === input.goalId,
+      ) as SavingsGoal | undefined;
+      const configuration = current.configurations.find(
+        (candidate) => candidate.id === goal?.activeConfigurationId,
+      ) as SavingsPlanConfiguration | undefined;
+      if (goal === undefined || configuration?.projectionMode !== "ADVANCED") {
+        throw new Error(
+          "Solo una meta avanzada admite correcciones de movimientos.",
+        );
+      }
+      const previous = current.movements.find(
+        (candidate) =>
+          candidate.id === input.movementId &&
+          candidate.goalId === input.goalId,
+      ) as SavingsMovement | undefined;
+      if (previous === undefined || previous.status !== "ACTIVE") {
+        throw new Error("El movimiento no existe o ya está anulado.");
+      }
+      const previousRevision = current.movementRevisions.find(
+        (candidate) => candidate.id === previous.currentRevisionId,
+      ) as MovementRevision | undefined;
+      if (previousRevision === undefined) {
+        throw new Error("La revisión vigente del movimiento no existe.");
+      }
+      const { note: _previousNote, ...withoutPreviousNote } = previous;
+      const replacement: SavingsMovement = {
+        ...withoutPreviousNote,
+        type: input.type,
+        amount: canonicalDecimal(input.amount.trim()),
+        effectiveDate: input.effectiveDate,
+        ...(input.note === undefined || input.note.trim().length === 0
+          ? {}
+          : { note: input.note.trim() }),
+        currentRevisionId: revisionId,
+        updatedAt: now,
+      };
+      const product = this.#productFor(current, configuration);
+      const goalMovements = current.movements
+        .filter((candidate) => candidate.goalId === goal.id)
+        .map((candidate) =>
+          candidate.id === previous.id ? replacement : candidate,
+        ) as SavingsMovement[];
+      calculateActualLedger(
+        configuration.initialBalance ?? goal.initialBalance ?? "0",
+        goalMovements,
+        { product },
+      );
+      const revision = createMovementRevision(previous, replacement, {
+        id: revisionId,
+        revisionNumber: previousRevision.revisionNumber + 1,
+        reason,
+        createdAt: now,
+        supersedesId: previousRevision.id,
+      });
+      return {
+        ...current,
+        appVersion: this.#options.appVersion,
+        exportedAt: now,
+        movements: current.movements.map((candidate) =>
+          candidate.id === previous.id ? replacement : candidate,
+        ),
+        movementRevisions: [...current.movementRevisions, revision],
+        closes: current.closes.map((close) =>
+          close.goalId === goal.id &&
+          close.status === "VALID" &&
+          (previous.effectiveDate < close.periodEnd ||
+            replacement.effectiveDate < close.periodEnd)
+            ? {
+                ...close,
+                status: "STALE" as const,
+                invalidatedAt: now,
+                reason: "La corrección cambió el periodo cerrado.",
+              }
+            : close,
+        ),
+      };
+    });
+    return this.getGoal(input.goalId);
   }
 
   public async changeGoalStatus(

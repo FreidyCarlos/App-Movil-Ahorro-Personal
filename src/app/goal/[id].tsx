@@ -317,7 +317,7 @@ export default function GoalDetailScreen() {
             </View>
 
             <View style={styles.section}>
-              <SectionHeading title="Historial" description="Corregir no borra: una anulación conserva su revisión." />
+              <SectionHeading title="Historial" description="Corregir o anular conserva cada versión anterior y su motivo." />
               {detail.movements.length === 0 ? (
                 <Text style={[styles.body, { color: colors.muted }]}>Aún no hay movimientos confirmados.</Text>
               ) : detail.movements.map((movement) => (
@@ -344,7 +344,19 @@ export default function GoalDetailScreen() {
                         <AppButton label="Cancelar" onPress={() => { setVoidingMovementId(undefined); setVoidReason(""); }} variant="quiet" />
                       </View>
                     ) : (
-                      <AppButton label="Anular con trazabilidad" onPress={() => setVoidingMovementId(movement.id)} variant="danger" />
+                      <View style={styles.movementActions}>
+                        <AppButton
+                          label="Corregir con trazabilidad"
+                          onPress={() =>
+                            router.push({
+                              pathname: MOBILE_ROUTES.registerMovement,
+                              params: { id: detail.id, movementId: movement.id },
+                            })
+                          }
+                          variant="secondary"
+                        />
+                        <AppButton label="Anular con trazabilidad" onPress={() => setVoidingMovementId(movement.id)} variant="danger" />
+                      </View>
                     )
                   ) : null}
                 </AppCard>
@@ -401,6 +413,7 @@ const styles = StyleSheet.create({
   movement: { gap: APP_SPACING.sm },
   movementTop: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: APP_SPACING.sm, justifyContent: "space-between" },
   movementAmount: { fontSize: 24, fontWeight: "900" },
+  movementActions: { gap: APP_SPACING.xs },
   actions: { gap: APP_SPACING.xs },
   voidForm: { gap: APP_SPACING.xs },
   disclaimer: { fontSize: 12, lineHeight: 18 },

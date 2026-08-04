@@ -310,3 +310,34 @@ versionada y diseña una experiencia propia.
 No se copia la interfaz ni se reutiliza literalmente código productivo. La
 aplicación móvil puede desarrollarse, probarse y distribuirse sin acceso a la
 referencia utilizada durante el análisis.
+
+## Cierre de migración — Fase 8
+
+La comparación final se limitó al análisis público de Fase 0 y a los tres
+documentos principales de la referencia previamente autorizados. No fue
+necesario abrir su código fuente, configuración, dependencias, datos, copias ni
+artefactos.
+
+La única brecha verificable del MVP fue la conexión incompleta de la corrección
+de movimientos confirmados. El dominio móvil ya tenía revisiones inmutables,
+motivo, huella y relaciones persistentes, pero la aplicación sólo exponía el
+registro inicial y la anulación lógica. Fase 8 adaptó el concepto de corrección
+trazable dentro de la arquitectura móvil:
+
+- conserva identificador, versión anterior y cadena de revisiones;
+- exige un motivo explícito;
+- vuelve a validar monto, tipo, fecha, producto y saldo;
+- invalida los cierres afectados por la fecha anterior o corregida;
+- conserva las revisiones al exportar, importar y recuperar una copia;
+- ofrece un formulario nativo accesible sin copiar interfaz ni código web.
+
+No se migraron conciliación con saldos externos informados, borradores
+mensuales, impuestos, retenciones, GMF, eventos universitarios, productos o
+fondos específicos, sincronización por servidor, CSV, gráficos web, DOM, CSS,
+Recharts, secretos, datos personales, respaldos ni dependencias de la
+referencia. Son elementos excluidos por alcance, privacidad, arquitectura o
+falta de necesidad demostrada para el MVP.
+
+El resultado no depende de la referencia para compilar, probarse, persistir,
+restaurar copias o ejecutarse. No se copió código productivo y no se modificó el
+proyecto utilizado como guía.

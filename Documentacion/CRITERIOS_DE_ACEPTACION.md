@@ -3,7 +3,8 @@
 Fecha: 3 de agosto de 2026. Estos criterios definen el resultado del MVP; la
 evidencia móvil disponible incluye el cierre de Fase 7 con validación funcional,
 AAB de tienda y APK release ejecutado en Android 16. Las Fases 0 a 7 están
-cerradas; las Fases 8 y 9 no se han iniciado.
+cerradas y publicadas; Fase 8 quedó completada localmente y pendiente de
+publicación. Fase 9 no se ha iniciado.
 
 ## Producto y metas
 
@@ -89,6 +90,8 @@ cerradas; las Fases 8 y 9 no se han iniciado.
 - **CA-034:** solo la presentación/consolidación redondea; el valor preciso se
   conserva.
 - **CA-035:** un movimiento corregido conserva revisiones; anular es lógico.
+  Fase 8 verificó ambos recorridos sobre SQLite real y confirmó que una copia
+  portable conserva la cadena de versiones.
 - **CA-036:** un ajuste exige observación.
 - **CA-037:** un retiro superior al saldo se rechaza en el MVP.
 - **CA-038:** el cierre registra conjunto de movimientos, versiones y política.
@@ -214,6 +217,12 @@ La Fase 7 ejecutó resultados reales de:
 El resultado final suma 145 pruebas Vitest y 6 pruebas de componentes, dos
 builds Android release y ejecución física del APK. No hubo distribución. La
 evidencia detallada está en `Documentacion/RESULTADOS_FASE_7.md`.
+
+Fase 8 completó `CA-035` de extremo a extremo sin ampliar el alcance financiero:
+147 pruebas Vitest y 8 de componentes aprobaron la corrección trazable,
+persistencia, copias e interfaz. Se generó además un AAB de producción con
+`versionCode 10`, sin instalación ni distribución. La evidencia está en
+`Documentacion/RESULTADOS_FASE_8.md`.
 
 ## Evidencia histórica de Fase 2
 

@@ -154,11 +154,21 @@ Fecha: 3 de agosto de 2026.
 La Fase 7 completó la validación funcional Android del MVP y generó un AAB de
 tienda y un APK release instalable. El APK actualizó el paquete existente sin
 borrar datos, quedó no depurable y abrió con bundle embebido y Metro ausente.
+Fase 8 generó un nuevo AAB de tienda con `versionCode 10`; se verificaron su
+estructura, manifiesto base y metadatos de firma, pero no se instaló ni
+distribuyó. La ejecución física del binario continúa respaldada por la evidencia
+release de Fase 7.
 Continúan fuera de este cierre:
 
 - límites máximos, rendimiento y presión de memoria;
 - falta real de espacio;
 - distribución, validación iOS o tablet, cifrado, biometría o PIN.
+
+La Fase 8 no incorporó conciliación automática con saldos externos, borradores
+mensuales, sincronización entre dispositivos, CSV, impuestos, retenciones, GMF,
+productos específicos ni datos del proyecto guía. La corrección de movimientos
+es manual, exige motivo y conserva revisiones; no consulta comprobantes,
+cuentas, bancos ni fuentes externas.
 
 La Fase 5 publicada revisó dependencias, permisos, logs,
 archivos manipulados, límites, almacenamiento, modelo de amenazas y

@@ -14,6 +14,7 @@ import type {
   GoalDetailView,
   GoalSummaryView,
   RegisterMovementInput,
+  ReviseMovementInput,
   ReviseAdvancedContributionInput,
   ConvertAdvancedGoalToSimpleInput,
 } from "../../application/mobile-savings-service.js";
@@ -35,6 +36,7 @@ interface AppContextValue {
   createAdvancedGoal(input: ValidAdvancedGoalInput): Promise<void>;
   getGoal(goalId: string): Promise<GoalDetailView>;
   registerMovement(input: RegisterMovementInput): Promise<GoalDetailView>;
+  reviseMovement(input: ReviseMovementInput): Promise<GoalDetailView>;
   voidMovement(goalId: string, movementId: string, reason: string): Promise<GoalDetailView>;
   changeGoalStatus(goalId: string, status: GoalStatus): Promise<GoalDetailView>;
   closeActualPeriod(goalId: string, periodEnd: string): Promise<GoalDetailView>;
@@ -225,6 +227,10 @@ export function AppProvider({
       registerMovement: (input) =>
         runGoalOperation((activeRuntime) =>
           activeRuntime.registerMovement(input),
+        ),
+      reviseMovement: (input) =>
+        runGoalOperation((activeRuntime) =>
+          activeRuntime.reviseMovement(input),
         ),
       voidMovement: (goalId, movementId, reason) =>
         runGoalOperation((activeRuntime) =>

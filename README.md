@@ -38,8 +38,16 @@ cambio conservador a modo simple. El control integral aprobó 151 pruebas, la
 configuración Expo pasó 20 de 20 comprobaciones y se generaron un AAB de tienda
 y un APK release instalable con `versionCode 9`. El APK actualizó el paquete
 existente sin borrar datos, quedó no depurable, abrió con bundle embebido y sin
-Metro y aprobó estabilidad y arranque en frío. No hubo distribución. Las Fases
-8 y 9 no se han iniciado.
+Metro y aprobó estabilidad y arranque en frío. No hubo distribución.
+
+La Fase 8 completó una migración mínima y documentada. La única brecha
+demostrada fue la corrección trazable de movimientos: ahora permite cambiar
+tipo, monto, fecha y nota con motivo obligatorio, conserva cada revisión,
+revalida el saldo e invalida cierres afectados. No se copió código ni interfaz
+del proyecto guía y no se añadieron dependencias o migraciones SQLite. La
+validación aprobó 147 pruebas Vitest y 8 de componentes, 155 en total. También
+se generó un AAB de producción con `versionCode 10`, sin instalación ni
+distribución. Fase 9 no se ha iniciado.
 
 El núcleo calcula proyecciones simples y avanzadas, normaliza tasas, reconstruye
 movimientos reales, genera cierres, compara proyectado frente a real y valida
@@ -208,6 +216,7 @@ automática de historiales queda fuera del MVP.
 - [Seguridad y robustez — Fase 5](Documentacion/SEGURIDAD_Y_ROBUSTEZ.md)
 - [Validación visual y accesibilidad — Fase 6](Documentacion/VALIDACION_VISUAL_Y_ACCESIBILIDAD.md)
 - [Resultados de validación funcional y producción — Fase 7](Documentacion/RESULTADOS_FASE_7.md)
+- [Resultados de migración final — Fase 8](Documentacion/RESULTADOS_FASE_8.md)
 
 La documentación pública del proyecto se mantiene en `Documentacion/`.
 

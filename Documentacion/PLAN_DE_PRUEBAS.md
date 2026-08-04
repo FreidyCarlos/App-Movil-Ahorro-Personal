@@ -485,4 +485,24 @@ real; no se ejecutó falta de espacio ni presión deliberada de memoria.
   aplicó la corrección forzada incompatible.
 
 La evidencia detallada está en `Documentacion/RESULTADOS_FASE_7.md`. No hubo
-distribución y las Fases 8 y 9 permanecen sin iniciar.
+distribución.
+
+### Fase 8 — Migración final
+
+- comparación documental mínima: completada sin abrir código fuente del
+  proyecto guía;
+- brecha `CA-035`: corrección trazable conectada en dominio, aplicación,
+  persistencia e interfaz;
+- revisión anterior, motivo, huella y cadena de versiones: conservados;
+- cierres afectados por fecha anterior o corregida: invalidados;
+- exportación, inspección, importación y recuperación de revisiones: aprobadas;
+- 16 archivos y 147 pruebas Vitest, más 8 pruebas de componentes: aprobados;
+- cobertura: 86,48 % sentencias, 77,40 % ramas, 86,68 % funciones y 86,56 %
+  líneas;
+- cambios de dependencias y esquema SQLite: ninguno;
+- AAB de producción de tienda con `versionCode 10`: compilado y verificado como
+  contenedor con manifiesto base, bundle embebido de Fase 8 y metadatos de firma;
+- operaciones sobre teléfono y distribución: no ejecutadas.
+
+La evidencia detallada está en `Documentacion/RESULTADOS_FASE_8.md`. Fase 9 no
+se inició.
