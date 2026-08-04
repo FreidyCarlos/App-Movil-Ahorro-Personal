@@ -2,9 +2,8 @@
 
 Fecha: 3 de agosto de 2026. Estos criterios definen el resultado del MVP; la
 evidencia móvil disponible incluye el cierre de Fase 7 con validación funcional,
-AAB de tienda y APK release ejecutado en Android 16. Las Fases 0 a 7 están
-cerradas y publicadas; Fase 8 quedó completada localmente y pendiente de
-publicación. Fase 9 no se ha iniciado.
+AAB de tienda y APK release ejecutado en Android 16. Las Fases 0 a 8 están
+cerradas y publicadas. Fase 9 no se ha iniciado.
 
 ## Producto y metas
 
