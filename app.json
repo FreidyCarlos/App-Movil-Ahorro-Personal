@@ -13,7 +13,7 @@
     ],
     "android": {
       "package": "com.ahorropersonal.app",
-      "versionCode": 8,
+      "versionCode": 9,
       "allowBackup": false,
       "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",

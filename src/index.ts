@@ -13,6 +13,7 @@ export * from "./domain/calculations/updated-projection.js";
 export * from "./domain/serialization/snapshot.js";
 export * from "./domain/validation/schemas.js";
 export * from "./application/backup/backup-service.js";
+export * from "./application/advanced-goal-form.js";
 export * from "./application/create-empty-snapshot.js";
 export * from "./application/errors/persistence-error.js";
 export * from "./application/mobile-savings-service.js";

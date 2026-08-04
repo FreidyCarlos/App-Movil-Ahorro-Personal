@@ -3,8 +3,8 @@
 Fecha de ejecución local: 3 de agosto de 2026.
 
 Estado: **implementación, validación automatizada, revisión física visual y
-recorrido con TalkBack completados**. La Fase 6 queda cerrada técnicamente en
-local y pendiente de publicación. La Fase 7 no se ha iniciado.
+recorrido con TalkBack completados**. La Fase 6 quedó cerrada y publicada. La
+Fase 7 se ejecutó después y está documentada por separado.
 
 ## Objetivo visual
 
@@ -136,8 +136,8 @@ foco permitió comprobar el recorrido real y el desplazamiento automático en
 las tres pantallas. Las etiquetas y estados coincidieron con el árbol accesible
 y con los contratos automatizados.
 
-La prueba completa la brecha técnica de Fase 6. Solo queda revisar y publicar
-el cambio cuando el usuario lo autorice; esa publicación no inicia Fase 7.
+La prueba completó la brecha técnica de Fase 6. El cambio fue revisado y
+publicado antes de iniciar Fase 7.
 
 No se tocaron datos personales, otras aplicaciones ni contenido externo. No se
 guardó la entrada sintética del formulario ni se ejecutaron copias. No se
@@ -147,12 +147,12 @@ Al cerrar la ejecución, TalkBack y la exploración táctil se deshabilitaron, l
 servicios accesibles volvieron al estado inicial, la app quedó detenida, Metro
 fue retirado, el puerto local quedó libre y el reenvío USB quedó ausente.
 
-## Límites de esta fase
+## Límites de esta fase en ese corte
 
 - La interfaz conectada continúa siendo el recorrido simple entregado en Fase
   4. El sistema visual queda preparado para crecer, pero no inventa pantallas
   avanzadas todavía no conectadas.
 - iOS y tablet no tienen validación física.
 - La orientación horizontal no forma parte del alcance admitido actual.
-- La compilación de producción, E2E completo y distribución pertenecen a Fase
-  7.
+- La compilación de producción y E2E completo pertenecían a Fase 7; la
+  distribución continúa fuera del cierre.

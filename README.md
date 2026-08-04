@@ -21,7 +21,7 @@ de Android y bloquea permisos heredados de almacenamiento; las copias recién
 escritas se verifican antes de proteger una importación y una base incompleta ya
 no puede confundirse con una instalación nueva.
 
-La Fase 6 quedó completada localmente. La interfaz adopta una identidad propia de **ruta
+La Fase 6 quedó completada y publicada. La interfaz adopta una identidad propia de **ruta
 de ahorro**, reorganiza inicio, creación de meta y copias con jerarquía
 editorial, tema claro/oscuro, foco visible, objetivos táctiles de 48 puntos,
 texto envolvente y reducción de movimiento. La implementación y 137 pruebas
@@ -30,8 +30,16 @@ temas, texto al 130 %, foco, teclado, navegación táctil y reducción de
 movimiento; además se corrigió y repitió el ajuste del formulario sobre el
 teclado. TalkBack se habilitó manualmente, quedó enlazado y recorrió inicio,
 formulario y datos con orden, nombres, estados y acciones accesibles correctos.
-El dispositivo y el entorno local se restauraron al terminar. No se generó
-otro APK, no se inició la Fase 7 y la publicación de Fase 6 sigue pendiente.
+El dispositivo y el entorno local se restauraron al terminar.
+
+La Fase 7 quedó completada técnicamente. La interfaz móvil ya cubre creación
+simple y avanzada, realidad, cierres, comparación, revisiones auditables y
+cambio conservador a modo simple. El control integral aprobó 151 pruebas, la
+configuración Expo pasó 20 de 20 comprobaciones y se generaron un AAB de tienda
+y un APK release instalable con `versionCode 9`. El APK actualizó el paquete
+existente sin borrar datos, quedó no depurable, abrió con bundle embebido y sin
+Metro y aprobó estabilidad y arranque en frío. No hubo distribución. Las Fases
+8 y 9 no se han iniciado.
 
 El núcleo calcula proyecciones simples y avanzadas, normaliza tasas, reconstruye
 movimientos reales, genera cierres, compara proyectado frente a real y valida
@@ -71,7 +79,8 @@ producción ni a autorización de distribución.
 Estas validaciones físicas complementan el cierre de la aplicación móvil. La
 revisión técnica de **Seguridad y robustez** se ejecutó después, sin convertir
 el APK interno en producción. La validación visual corresponde a Fase 6 y la
-validación funcional completa con compilación de producción, a Fase 7.
+validación funcional completa con compilación de producción quedó registrada
+en Fase 7.
 
 El entrypoint móvil de entrega es `expo-router/entry` y usa las rutas de
 `src/app`. Los entrypoints creados exclusivamente para aislar V1–V6 fueron
@@ -198,6 +207,7 @@ automática de historiales queda fuera del MVP.
 - [Modelo de amenazas](Documentacion/MODELO_DE_AMENAZAS.md)
 - [Seguridad y robustez — Fase 5](Documentacion/SEGURIDAD_Y_ROBUSTEZ.md)
 - [Validación visual y accesibilidad — Fase 6](Documentacion/VALIDACION_VISUAL_Y_ACCESIBILIDAD.md)
+- [Resultados de validación funcional y producción — Fase 7](Documentacion/RESULTADOS_FASE_7.md)
 
 La documentación pública del proyecto se mantiene en `Documentacion/`.
 

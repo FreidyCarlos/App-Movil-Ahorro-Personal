@@ -467,15 +467,22 @@ real; no se ejecutó falta de espacio ni presión deliberada de memoria.
   de exportación/selección verificados sin guardar, exportar ni importar;
 - preferencias restauradas, app detenida, Metro retirado, puerto local libre y
   reenvío USB ausente;
-- Fase 6 cerrada técnicamente en local y pendiente de publicación. Fase 7 no
-  iniciada.
+- Fase 6 cerrada y publicada; su evidencia se reutilizó en Fase 7.
 
 ### Fase 7 — Validación funcional completa
 
-- componentes, integración, migraciones y flujos E2E completos;
-- exportación e importación equivalentes de extremo a extremo;
-- compilación de producción y ejecución Android autorizada;
-- actualización o reinstalación conservando datos cuando exista autorización;
-- auditoría final de dependencias y criterios de aceptación del MVP.
+- componentes, integración, migraciones y flujos funcionales: aprobados;
+- exportación, vista previa, respaldo, importación y recuperación avanzada:
+  aprobados;
+- 16 archivos y 145 pruebas Vitest, más 6 pruebas de componentes: aprobados;
+- AAB de tienda y APK release instalable, `versionCode 9`: compilados;
+- actualización in situ desde versión 7, identidad conservada y paquete no
+  depurable: aprobados;
+- bundle embebido, Metro ausente, sin dev launcher, estabilidad y arranque en
+  frío: aprobados;
+- dependencias Expo compatibles y 20/20 controles de `expo-doctor`: aprobados;
+- auditoría: 11 moderadas transitivas conocidas, 0 altas y 0 críticas; no se
+  aplicó la corrección forzada incompatible.
 
-No se declarará aprobado ninguno de estos grupos hasta ejecutarlo en su fase.
+La evidencia detallada está en `Documentacion/RESULTADOS_FASE_7.md`. No hubo
+distribución y las Fases 8 y 9 permanecen sin iniciar.

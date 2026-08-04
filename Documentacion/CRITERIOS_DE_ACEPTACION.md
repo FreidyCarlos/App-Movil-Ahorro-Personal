@@ -1,10 +1,9 @@
 # Criterios de aceptación
 
 Fecha: 3 de agosto de 2026. Estos criterios definen el resultado del MVP; la
-evidencia móvil disponible alcanza el cierre complementario de Fase 4 con un
-development APK y un APK `preview` autónomo interno en Android 16. La Fase 5
-está publicada y la Fase 6 quedó cerrada técnicamente en local, pendiente de
-publicación.
+evidencia móvil disponible incluye el cierre de Fase 7 con validación funcional,
+AAB de tienda y APK release ejecutado en Android 16. Las Fases 0 a 7 están
+cerradas; las Fases 8 y 9 no se han iniciado.
 
 ## Producto y metas
 
@@ -156,7 +155,8 @@ añadió un APK `preview` autónomo interno sin Metro. La revisión sistemática
 seguridad y robustez de Fase 5 confirmó ausencia de logging productivo, red
 propia, WebView y ejecución dinámica; bloqueó permisos innecesarios y respaldos
 Android, reforzó archivos manipulados y recuperación, y mantuvo 0 hallazgos
-altos o críticos. CA-076 continúa reservado para Fase 7.
+altos o críticos. Fase 7 confirmó un APK release no depurable, bundle embebido,
+Metro ausente y ausencia de dev launcher; CA-076 queda aprobado.
 
 ## Experiencia y accesibilidad
 
@@ -195,9 +195,9 @@ correctos. CA-082, CA-083 y CA-084 quedan aprobados.
 - **CA-091:** la aplicación declara que no conecta bancos, no mueve dinero, no
   garantiza metas y no recomienda productos.
 
-## Evidencia de finalización futura
+## Evidencia de finalización
 
-El MVP no estará terminado sin resultados reales de:
+La Fase 7 ejecutó resultados reales de:
 
 - pruebas unitarias del dominio y conversiones;
 - integración con SQLite temporal, migración, importación y rollback;
@@ -211,7 +211,9 @@ El MVP no estará terminado sin resultados reales de:
 - funcionamiento completamente independiente de la aplicación utilizada como
   referencia.
 
-No se acepta una prueba no ejecutada ni una cifra corregida solo en la interfaz.
+El resultado final suma 145 pruebas Vitest y 6 pruebas de componentes, dos
+builds Android release y ejecución física del APK. No hubo distribución. La
+evidencia detallada está en `Documentacion/RESULTADOS_FASE_7.md`.
 
 ## Evidencia histórica de Fase 2
 
@@ -267,5 +269,5 @@ de producción, AAB, distribución o iOS.
 
 Esta evidencia no cerraba por sí sola la Fase 5 canónica. La ejecución local
 posterior revisó dependencias, permisos, logs, archivos manipulados, límites,
-almacenamiento, modelo de amenazas y recuperación. Producción continúa fuera de
-este resultado y corresponde a Fase 7.
+almacenamiento, modelo de amenazas y recuperación. La producción estaba fuera
+de ese resultado histórico y se validó después en Fase 7.

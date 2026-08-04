@@ -36,6 +36,8 @@ function AppNavigator() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="new-goal" options={{ title: "Diseñar una meta" }} />
         <Stack.Screen name="data" options={{ title: "Cuidar mis datos" }} />
+        <Stack.Screen name="goal/[id]" options={{ title: "Detalle de la meta" }} />
+        <Stack.Screen name="goal/[id]/register" options={{ title: "Registrar movimiento" }} />
       </Stack>
     </>
   );

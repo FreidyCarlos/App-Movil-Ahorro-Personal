@@ -11,8 +11,14 @@ import {
 import type { ImportPreview } from "../../application/backup/backup-service.js";
 import type {
   CreateSimpleGoalInput,
-  SimpleGoalView,
+  GoalDetailView,
+  GoalSummaryView,
+  RegisterMovementInput,
+  ReviseAdvancedContributionInput,
+  ConvertAdvancedGoalToSimpleInput,
 } from "../../application/mobile-savings-service.js";
+import type { ValidAdvancedGoalInput } from "../../application/advanced-goal-form.js";
+import type { GoalStatus } from "../../domain/models.js";
 import {
   createMobileRuntime,
   type MobileRuntime,
@@ -23,9 +29,17 @@ interface AppContextValue {
   readonly ready: boolean;
   readonly busy: boolean;
   readonly error?: string;
-  readonly goals: readonly SimpleGoalView[];
+  readonly goals: readonly GoalSummaryView[];
   refresh(): Promise<void>;
   createSimpleGoal(input: CreateSimpleGoalInput): Promise<void>;
+  createAdvancedGoal(input: ValidAdvancedGoalInput): Promise<void>;
+  getGoal(goalId: string): Promise<GoalDetailView>;
+  registerMovement(input: RegisterMovementInput): Promise<GoalDetailView>;
+  voidMovement(goalId: string, movementId: string, reason: string): Promise<GoalDetailView>;
+  changeGoalStatus(goalId: string, status: GoalStatus): Promise<GoalDetailView>;
+  closeActualPeriod(goalId: string, periodEnd: string): Promise<GoalDetailView>;
+  reviseAdvancedContribution(input: ReviseAdvancedContributionInput): Promise<GoalDetailView>;
+  convertAdvancedGoalToSimple(input: ConvertAdvancedGoalToSimpleInput): Promise<GoalDetailView>;
   exportBackup(): Promise<{ readonly name: string; readonly shared: boolean }>;
   previewImport(): Promise<ImportPreview | undefined>;
   confirmImport(token: string): Promise<void>;
@@ -40,7 +54,7 @@ export function AppProvider({
   readonly children: ReactNode;
 }): ReactNode {
   const [runtime, setRuntime] = useState<MobileRuntime>();
-  const [goals, setGoals] = useState<readonly SimpleGoalView[]>([]);
+  const [goals, setGoals] = useState<readonly GoalSummaryView[]>([]);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState<string>();
 
@@ -111,6 +125,45 @@ export function AppProvider({
     [loadGoals, requireRuntime],
   );
 
+  const createAdvancedGoal = useCallback(
+    async (input: ValidAdvancedGoalInput) => {
+      const activeRuntime = requireRuntime();
+      setBusy(true);
+      setError(undefined);
+      try {
+        await activeRuntime.createAdvancedGoal(input);
+        await loadGoals(activeRuntime);
+      } catch (caught) {
+        setError(safeUserMessage(caught));
+        throw caught;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [loadGoals, requireRuntime],
+  );
+
+  const runGoalOperation = useCallback(
+    async (
+      operation: (activeRuntime: MobileRuntime) => Promise<GoalDetailView>,
+    ) => {
+      const activeRuntime = requireRuntime();
+      setBusy(true);
+      setError(undefined);
+      try {
+        const detail = await operation(activeRuntime);
+        await loadGoals(activeRuntime);
+        return detail;
+      } catch (caught) {
+        setError(safeUserMessage(caught));
+        throw caught;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [loadGoals, requireRuntime],
+  );
+
   const exportBackup = useCallback(async () => {
     const activeRuntime = requireRuntime();
     setBusy(true);
@@ -167,6 +220,32 @@ export function AppProvider({
       goals,
       refresh,
       createSimpleGoal,
+      createAdvancedGoal,
+      getGoal: (goalId) => requireRuntime().getGoal(goalId),
+      registerMovement: (input) =>
+        runGoalOperation((activeRuntime) =>
+          activeRuntime.registerMovement(input),
+        ),
+      voidMovement: (goalId, movementId, reason) =>
+        runGoalOperation((activeRuntime) =>
+          activeRuntime.voidMovement(goalId, movementId, reason),
+        ),
+      changeGoalStatus: (goalId, status) =>
+        runGoalOperation((activeRuntime) =>
+          activeRuntime.changeGoalStatus(goalId, status),
+        ),
+      closeActualPeriod: (goalId, periodEnd) =>
+        runGoalOperation((activeRuntime) =>
+          activeRuntime.closeActualPeriod(goalId, periodEnd),
+        ),
+      reviseAdvancedContribution: (input) =>
+        runGoalOperation((activeRuntime) =>
+          activeRuntime.reviseAdvancedContribution(input),
+        ),
+      convertAdvancedGoalToSimple: (input) =>
+        runGoalOperation((activeRuntime) =>
+          activeRuntime.convertAdvancedGoalToSimple(input),
+        ),
       exportBackup,
       previewImport,
       confirmImport,
@@ -179,6 +258,9 @@ export function AppProvider({
       goals,
       refresh,
       createSimpleGoal,
+      createAdvancedGoal,
+      requireRuntime,
+      runGoalOperation,
       exportBackup,
       previewImport,
       confirmImport,

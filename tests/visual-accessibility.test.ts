@@ -68,7 +68,13 @@ describe("sistema visual accesible", () => {
 
   it("no trunca textos en las pantallas informativas", async () => {
     const sources = await Promise.all(
-      ["index.tsx", "new-goal.tsx", "data.tsx"].map((name) =>
+      [
+        "index.tsx",
+        "new-goal.tsx",
+        "data.tsx",
+        "goal/[id].tsx",
+        "goal/[id]/register.tsx",
+      ].map((name) =>
         readFile(new URL(`../src/app/${name}`, import.meta.url), "utf8"),
       ),
     );
@@ -97,6 +103,14 @@ describe("sistema visual accesible", () => {
       new URL("../src/app/data.tsx", import.meta.url),
       "utf8",
     );
+    const detailScreen = await readFile(
+      new URL("../src/app/goal/[id].tsx", import.meta.url),
+      "utf8",
+    );
+    const movementScreen = await readFile(
+      new URL("../src/app/goal/[id]/register.tsx", import.meta.url),
+      "utf8",
+    );
 
     expect(sharedUi).toContain("onFocus");
     expect(sharedUi).toContain("accessibilityState={{ disabled }}");
@@ -107,5 +121,9 @@ describe("sistema visual accesible", () => {
     expect(goalForm).toContain("keyboardVerticalOffset");
     expect(dataScreen).toContain("Alert.alert");
     expect(dataScreen).toContain('variant="danger"');
+    expect(detailScreen).toContain('accessibilityLabel="Motivo de la revisión"');
+    expect(detailScreen).toContain('accessibilityLabel="Motivo de la anulación"');
+    expect(movementScreen).toContain('accessibilityRole="radiogroup"');
+    expect(movementScreen).toContain('accessibilityRole="radio"');
   });
 });

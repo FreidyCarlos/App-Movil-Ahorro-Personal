@@ -28,11 +28,25 @@
     "typecheck": "tsc --noEmit",
     "typecheck:mobile": "tsc -p tsconfig.mobile.json --noEmit",
     "test": "vitest run",
+    "test:components": "jest --runInBand",
     "test:coverage": "vitest run --coverage",
-    "check": "npm run typecheck && npm run typecheck:mobile && npm test && npm run build"
+    "check": "npm run typecheck && npm run typecheck:mobile && npm test && npm run test:components && npm run build"
   },
   "engines": {
     "node": ">=24.15.0"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "modulePathIgnorePatterns": [
+      "<rootDir>/.expo/",
+      "<rootDir>/artifacts/"
+    ],
+    "testMatch": [
+      "<rootDir>/component-tests/**/*.test.tsx"
+    ]
   },
   "dependencies": {
     "decimal.js": "10.6.0",
@@ -55,9 +69,11 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@testing-library/react-native": "^14.0.1",
     "@types/node": "26.1.2",
     "@types/react": "~19.2.2",
     "@vitest/coverage-v8": "4.1.10",
+    "jest-expo": "~57.0.3",
     "typescript": "~6.0.3",
     "vitest": "4.1.10"
   }

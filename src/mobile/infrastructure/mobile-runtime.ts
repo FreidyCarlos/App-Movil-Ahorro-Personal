@@ -13,9 +13,16 @@ import {
 import { createEmptyDomainSnapshot } from "../../application/create-empty-snapshot.js";
 import {
   MobileSavingsService,
+  type GoalDetailView,
+  type GoalSummaryView,
+  type RegisterMovementInput,
+  type ReviseAdvancedContributionInput,
+  type ConvertAdvancedGoalToSimpleInput,
   type CreateSimpleGoalInput,
   type SimpleGoalView,
 } from "../../application/mobile-savings-service.js";
+import type { ValidAdvancedGoalInput } from "../../application/advanced-goal-form.js";
+import type { GoalStatus } from "../../domain/models.js";
 import type { StoredBackupFile } from "../../application/ports/backup-file-store.js";
 import { FINANCIAL_RULES_VERSION } from "../../domain/calculations/rates.js";
 import { ExpoSqliteDatabaseAdapter } from "../../infrastructure/database/expo-sqlite-adapter.js";
@@ -68,8 +75,16 @@ function today(): string {
 
 export interface MobileRuntime {
   readonly databaseStatus: "HEALTHY";
-  listGoals(): Promise<readonly SimpleGoalView[]>;
+  listGoals(): Promise<readonly GoalSummaryView[]>;
   createSimpleGoal(input: CreateSimpleGoalInput): Promise<SimpleGoalView>;
+  createAdvancedGoal(input: ValidAdvancedGoalInput): Promise<GoalDetailView>;
+  getGoal(goalId: string): Promise<GoalDetailView>;
+  registerMovement(input: RegisterMovementInput): Promise<GoalDetailView>;
+  voidMovement(goalId: string, movementId: string, reason: string): Promise<GoalDetailView>;
+  changeGoalStatus(goalId: string, status: GoalStatus): Promise<GoalDetailView>;
+  closeActualPeriod(goalId: string, periodEnd: string): Promise<GoalDetailView>;
+  reviseAdvancedContribution(input: ReviseAdvancedContributionInput): Promise<GoalDetailView>;
+  convertAdvancedGoalToSimple(input: ConvertAdvancedGoalToSimpleInput): Promise<GoalDetailView>;
   exportBackup(): Promise<StoredBackupFile>;
   shareBackup(file: StoredBackupFile): Promise<boolean>;
   selectAndPreviewImport(): Promise<ImportPreview | undefined>;
@@ -123,8 +138,21 @@ export async function createMobileRuntime(): Promise<MobileRuntime> {
 
   return {
     databaseStatus: initialization.integrityStatus,
-    listGoals: () => savings.listSimpleGoals(),
+    listGoals: () => savings.listGoals(),
     createSimpleGoal: (input) => savings.createSimpleGoal(input),
+    createAdvancedGoal: (input) => savings.createAdvancedGoal(input),
+    getGoal: (goalId) => savings.getGoal(goalId),
+    registerMovement: (input) => savings.registerMovement(input),
+    voidMovement: (goalId, movementId, reason) =>
+      savings.voidMovement(goalId, movementId, reason),
+    changeGoalStatus: (goalId, status) =>
+      savings.changeGoalStatus(goalId, status),
+    closeActualPeriod: (goalId, periodEnd) =>
+      savings.closeActualPeriod(goalId, periodEnd),
+    reviseAdvancedContribution: (input) =>
+      savings.reviseAdvancedContribution(input),
+    convertAdvancedGoalToSimple: (input) =>
+      savings.convertAdvancedGoalToSimple(input),
     exportBackup: () => backups.exportPortableBackup(),
     shareBackup: async (file) => {
       if (!(await Sharing.isAvailableAsync())) {

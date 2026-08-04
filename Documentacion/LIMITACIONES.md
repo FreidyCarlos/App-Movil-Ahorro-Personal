@@ -151,16 +151,14 @@ Fecha: 3 de agosto de 2026.
 
 ## Estado actual
 
-La Fase 4 contiene una primera aplicación React Native/Expo. En Android 9 se
-validó un recorrido básico del adaptador `expo-sqlite`, selector, archivos,
-persistencia, reemplazo por importación y funcionamiento sin red. Esto no
-valida todavía:
+La Fase 7 completó la validación funcional Android del MVP y generó un AAB de
+tienda y un APK release instalable. El APK actualizó el paquete existente sin
+borrar datos, quedó no depurable y abrió con bundle embebido y Metro ausente.
+Continúan fuera de este cierre:
 
 - límites máximos, rendimiento y presión de memoria;
 - falta real de espacio;
-- actualización o reinstalación conservando datos;
-- binario Android de producción, AAB, distribución, iOS, cifrado, biometría o
-  PIN.
+- distribución, validación iOS o tablet, cifrado, biometría o PIN.
 
 La Fase 5 publicada revisó dependencias, permisos, logs,
 archivos manipulados, límites, almacenamiento, modelo de amenazas y
@@ -175,7 +173,7 @@ registrado que la activación automatizada de TalkBack no enlazó el servicio;
 la activación manual sí lo enlazó y permitió aprobar el recorrido de foco,
 etiquetas, estados y acciones en las tres pantallas. Todos los ajustes se
 restauraron. iOS y tablet continúan sin validación física. La compilación de
-producción con validación funcional completa corresponde a Fase 7.
+producción y validación funcional Android quedaron aprobadas en Fase 7.
 
 La capitalización mensual del núcleo solo admite una tasa única, meses
 calendario completos y ausencia de movimientos intermedios. Si el producto
@@ -193,8 +191,12 @@ al autor ni cifra la copia.
 La integración SQLite real se prueba con el módulo incluido en Node 24.15. El
 adaptador estructural de Expo y su conexión a `expo-sqlite`, WAL y archivos se
 comprobaron en recorridos básicos de Android 9 y Android 16, incluido el APK
-`preview` autónomo interno. Rendimiento, límites, binario de producción, AAB,
-distribución e iOS siguen pendientes.
+`preview` autónomo interno. Rendimiento físico del caso máximo, distribución e
+iOS siguen pendientes.
+
+La auditoría final conserva 11 vulnerabilidades moderadas transitivas de las
+herramientas Expo y ninguna alta o crítica. Npm sólo propone resolverlas con un
+cambio forzado incompatible; se espera una actualización compatible de Expo.
 
 Expo Go no será criterio de aceptación. La estrategia recomendada usa un
 development build; EAS Build evita instalar herramientas nativas locales, pero

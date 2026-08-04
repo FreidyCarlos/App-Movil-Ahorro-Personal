@@ -2,16 +2,24 @@ import { useRouter } from "expo-router";
 import { useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
+  Alert,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  Switch,
   View,
 } from "react-native";
 
 import { MOBILE_ROUTES } from "../application/mobile-navigation.js";
+import {
+  validateAdvancedGoalForm,
+  type AdvancedGoalFormErrors,
+  type AdvancedYieldChoice,
+  type OtherSupportedRateType,
+} from "../application/advanced-goal-form.js";
 import {
   validateSimpleGoalForm,
   type SimpleGoalFormErrors,
@@ -34,6 +42,29 @@ import {
   MINIMUM_TOUCH_TARGET,
 } from "../mobile/presentation/visual-system.js";
 
+const YIELD_CHOICES: readonly {
+  readonly value: AdvancedYieldChoice;
+  readonly label: string;
+  readonly help: string;
+}[] = [
+  { value: "ZERO", label: "Sin rendimiento", help: "Tasa cero explícita." },
+  { value: "EA", label: "Tengo una tasa E.A.", help: "Conserva el porcentaje anual publicado." },
+  { value: "OTHER", label: "Tengo otro tipo de tasa", help: "Permite una expresión soportada." },
+  { value: "UNKNOWN", label: "No estoy seguro", help: "Bloquea el cálculo hasta completar los datos." },
+];
+
+const OTHER_RATES: readonly {
+  readonly value: OtherSupportedRateType;
+  readonly label: string;
+}[] = [
+  { value: "EM", label: "E.M." },
+  { value: "ET", label: "E.T." },
+  { value: "ES", label: "E.S." },
+  { value: "NMV", label: "N.M.V." },
+  { value: "NTV", label: "N.T.V." },
+  { value: "NOMINAL_ANNUAL_DUE", label: "Nominal anual vencida" },
+];
+
 export default function NewGoalScreen() {
   const colors = useAppColors();
   const router = useRouter();
@@ -43,13 +74,25 @@ export default function NewGoalScreen() {
   const amountInputRef = useRef<TextInput>(null);
   const periodsInputRef = useRef<TextInput>(null);
   const dateInputRef = useRef<TextInput>(null);
-  const { busy, createSimpleGoal } = useApp();
+  const { busy, createSimpleGoal, createAdvancedGoal } = useApp();
   const [name, setName] = useState("");
   const [periodicAmount, setPeriodicAmount] = useState("");
   const [periodicity, setPeriodicity] = useState<SimplePeriodicity>("MONTHLY");
   const [numberOfPeriods, setNumberOfPeriods] = useState("");
   const [startDate, setStartDate] = useState("");
-  const [errors, setErrors] = useState<SimpleGoalFormErrors>({});
+  const [advanced, setAdvanced] = useState(false);
+  const [initialBalance, setInitialBalance] = useState("0");
+  const [targetAmount, setTargetAmount] = useState("");
+  const [yieldChoice, setYieldChoice] =
+    useState<AdvancedYieldChoice>("ZERO");
+  const [rateValue, setRateValue] = useState("");
+  const [otherRateType, setOtherRateType] =
+    useState<OtherSupportedRateType>("EM");
+  const [capitalizationPeriodsPerYear, setCapitalizationPeriodsPerYear] =
+    useState("");
+  const [errors, setErrors] = useState<
+    SimpleGoalFormErrors & AdvancedGoalFormErrors
+  >({});
 
   const preview = useMemo(
     () =>
@@ -63,7 +106,64 @@ export default function NewGoalScreen() {
     [name, periodicAmount, periodicity, numberOfPeriods, startDate],
   );
 
+  const advancedPreview = useMemo(
+    () =>
+      validateAdvancedGoalForm({
+        name,
+        periodicAmount,
+        periodicity,
+        numberOfPeriods,
+        startDate,
+        targetAmount,
+        initialBalance,
+        yieldChoice,
+        rateValue,
+        otherRateType,
+        capitalizationPeriodsPerYear,
+      }),
+    [
+      name,
+      periodicAmount,
+      periodicity,
+      numberOfPeriods,
+      startDate,
+      targetAmount,
+      initialBalance,
+      yieldChoice,
+      rateValue,
+      otherRateType,
+      capitalizationPeriodsPerYear,
+    ],
+  );
+
   const submit = async () => {
+    if (advanced) {
+      const validation = validateAdvancedGoalForm({
+        name,
+        periodicAmount,
+        periodicity,
+        numberOfPeriods,
+        startDate,
+        targetAmount,
+        initialBalance,
+        yieldChoice,
+        rateValue,
+        otherRateType,
+        capitalizationPeriodsPerYear,
+      });
+      if (!validation.success) {
+        setErrors(validation.errors);
+        return;
+      }
+      setErrors({});
+      try {
+        await createAdvancedGoal(validation.data);
+        router.replace(MOBILE_ROUTES.home);
+      } catch {
+        // El proveedor mantiene el error seguro y la transacción revierte.
+      }
+      return;
+    }
     const validation = validateSimpleGoalForm({
       name,
       periodicAmount,
@@ -82,6 +182,27 @@ export default function NewGoalScreen() {
     } catch {
       // El proveedor ya expone un mensaje seguro y no registra los datos.
     }
+  };
+
+  const toggleAdvanced = (next: boolean) => {
+    if (
+      !next &&
+      (initialBalance !== "0" ||
+        targetAmount.length > 0 ||
+        yieldChoice !== "ZERO" ||
+        rateValue.length > 0)
+    ) {
+      Alert.alert(
+        "Volver a proyección simple",
+        "El saldo inicial, objetivo y tasa dejarán de influir. Los campos básicos se conservarán y nada se guardará hasta confirmar la meta.",
+        [
+          { text: "Cancelar", style: "cancel" },
+          { text: "Continuar en simple", onPress: () => setAdvanced(false) },
+        ],
+      );
+      return;
+    }
+    setAdvanced(next);
   };
 
   const changePeriods = (delta: number) => {
@@ -309,9 +430,160 @@ export default function NewGoalScreen() {
             <FieldError message={errors.startDate} />
           </View>
 
-          {preview.success ? (
+          <AppCard style={styles.advancedCard} tone={advanced ? "primary" : "plain"}>
+            <View style={styles.advancedToggleRow}>
+              <View style={styles.advancedToggleCopy}>
+                <Text accessibilityRole="header" style={[styles.advancedTitle, { color: colors.text }]}>Usar proyección avanzada</Text>
+                <Text style={[styles.advancedHelp, { color: colors.muted }]}>Añade saldo real, objetivo y rendimiento sin perder nombre, aporte ni duración.</Text>
+              </View>
+              <Switch
+                accessibilityLabel="Usar proyección avanzada"
+                accessibilityState={{ checked: advanced }}
+                onValueChange={toggleAdvanced}
+                thumbColor={advanced ? colors.accent : colors.surfaceRaised}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                value={advanced}
+              />
+            </View>
+          </AppCard>
+
+          {advanced ? (
+            <View style={styles.formSection}>
+              <SectionHeading
+                description="Estos valores separan el plan del ahorro confirmado. Ninguno consulta una cuenta bancaria."
+                number="04"
+                title="Añade el contexto real"
+              />
+              <FieldLabel text="Saldo inicial (COP)" />
+              <TextInput
+                accessibilityLabel="Saldo inicial en pesos colombianos"
+                inputMode="numeric"
+                keyboardType="number-pad"
+                maxLength={11}
+                onChangeText={setInitialBalance}
+                placeholder="0"
+                placeholderTextColor={colors.muted}
+                selectionColor={colors.focus}
+                style={[styles.input, { backgroundColor: colors.surfaceRaised, borderColor: errors.initialBalance === undefined ? colors.border : colors.danger, color: colors.text }]}
+                value={initialBalance}
+              />
+              <FieldError message={errors.initialBalance} />
+
+              <FieldLabel text="Objetivo monetario (opcional)" />
+              <TextInput
+                accessibilityLabel="Objetivo monetario opcional en pesos colombianos"
+                inputMode="numeric"
+                keyboardType="number-pad"
+                maxLength={11}
+                onChangeText={setTargetAmount}
+                placeholder="1000000"
+                placeholderTextColor={colors.muted}
+                selectionColor={colors.focus}
+                style={[styles.input, { backgroundColor: colors.surfaceRaised, borderColor: errors.targetAmount === undefined ? colors.border : colors.danger, color: colors.text }]}
+                value={targetAmount}
+              />
+              <FieldError message={errors.targetAmount} />
+
+              <FieldLabel text="¿Cómo deseas proyectar el rendimiento?" />
+              <View accessibilityRole="radiogroup" style={styles.rateChoices}>
+                {YIELD_CHOICES.map((choice) => {
+                  const selected = yieldChoice === choice.value;
+                  return (
+                    <Pressable
+                      accessibilityLabel={choice.label}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected }}
+                      key={choice.value}
+                      onPress={() => setYieldChoice(choice.value)}
+                      style={({ pressed }) => [styles.rateChoice, { backgroundColor: selected ? colors.primarySoft : colors.surfaceRaised, borderColor: selected ? colors.primary : colors.border, opacity: pressed ? 0.72 : 1 }]}
+                    >
+                      <View style={[styles.radioDot, { borderColor: colors.primary }]}>
+                        {selected ? <View style={[styles.radioFill, { backgroundColor: colors.primary }]} /> : null}
+                      </View>
+                      <View style={styles.rateChoiceCopy}>
+                        <Text style={[styles.rateChoiceLabel, { color: colors.text }]}>{choice.label}</Text>
+                        <Text style={[styles.rateChoiceHelp, { color: colors.muted }]}>{choice.help}</Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              <FieldError message={errors.yieldChoice} />
+
+              {yieldChoice === "EA" || yieldChoice === "OTHER" ? (
+                <>
+                  {yieldChoice === "OTHER" ? (
+                    <>
+                      <FieldLabel text="Tipo de tasa" />
+                      <View accessibilityRole="radiogroup" style={styles.otherRates}>
+                        {OTHER_RATES.map((rate) => {
+                          const selected = otherRateType === rate.value;
+                          return (
+                            <Pressable
+                              accessibilityLabel={`Tipo de tasa ${rate.label}`}
+                              accessibilityRole="radio"
+                              accessibilityState={{ selected }}
+                              key={rate.value}
+                              onPress={() => setOtherRateType(rate.value)}
+                              style={({ pressed }) => [styles.rateChip, { backgroundColor: selected ? colors.primary : colors.surfaceRaised, borderColor: colors.primary, opacity: pressed ? 0.72 : 1 }]}
+                            >
+                              <Text style={[styles.rateChipText, { color: selected ? colors.primaryText : colors.primary }]}>{rate.label}</Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    </>
+                  ) : null}
+                  <FieldLabel text="Tasa publicada (%)" />
+                  <TextInput
+                    accessibilityHint="Escribe el porcentaje, por ejemplo 9.5"
+                    accessibilityLabel="Valor original de la tasa en porcentaje"
+                    inputMode="decimal"
+                    keyboardType="decimal-pad"
+                    maxLength={12}
+                    onChangeText={setRateValue}
+                    placeholder="9.5"
+                    placeholderTextColor={colors.muted}
+                    selectionColor={colors.focus}
+                    style={[styles.input, { backgroundColor: colors.surfaceRaised, borderColor: errors.rateValue === undefined ? colors.border : colors.danger, color: colors.text }]}
+                    value={rateValue}
+                  />
+                  <FieldError message={errors.rateValue} />
+                  {yieldChoice === "OTHER" && otherRateType === "NOMINAL_ANNUAL_DUE" ? (
+                    <>
+                      <FieldLabel text="Capitalizaciones por año" />
+                      <TextInput
+                        accessibilityLabel="Capitalizaciones por año"
+                        inputMode="numeric"
+                        keyboardType="number-pad"
+                        maxLength={3}
+                        onChangeText={setCapitalizationPeriodsPerYear}
+                        placeholder="12"
+                        placeholderTextColor={colors.muted}
+                        selectionColor={colors.focus}
+                        style={[styles.input, { backgroundColor: colors.surfaceRaised, borderColor: errors.capitalizationPeriodsPerYear === undefined ? colors.border : colors.danger, color: colors.text }]}
+                        value={capitalizationPeriodsPerYear}
+                      />
+                      <FieldError message={errors.capitalizationPeriodsPerYear} />
+                    </>
+                  ) : null}
+                </>
+              ) : null}
+
+              {yieldChoice === "UNKNOWN" ? (
+                <View style={[styles.unknownHelp, { backgroundColor: colors.accentSoft }]}>
+                  <Text style={[styles.unknownTitle, { color: colors.accent }]}>Busca estos datos antes de continuar</Text>
+                  <Text style={[styles.unknownText, { color: colors.text }]}>Abreviatura exacta, periodo, efectiva o nominal, capitalización, vencida o anticipada, vigencia y forma de pago. La app no reemplazará lo desconocido por cero.</Text>
+                </View>
+              ) : null}
+
+              <Text style={[styles.disclaimer, { color: colors.muted }]}>La proyección muestra valores brutos estimados. No incluye retenciones, impuestos, inflación, comisiones, GMF ni cambios futuros en la tasa. El valor real puede ser menor.</Text>
+            </View>
+          ) : null}
+
+          {(advanced ? advancedPreview : preview).success ? (
             <AppCard
-              accessibilityLabel={`Vista previa: total planeado ${formatCop(preview.projectedTotal)}, rendimiento proyectado cero`}
+              accessibilityLabel={`Vista previa de ${advanced ? "proyección avanzada" : "proyección simple"}`}
               accessible
               style={styles.preview}
               tone="accent"
@@ -319,13 +591,25 @@ export default function NewGoalScreen() {
               <View style={styles.previewTop}>
                 <Tag accent>VISTA PREVIA</Tag>
                 <Text style={[styles.previewEquation, { color: colors.muted }]}>
-                  {formatCop(preview.data.periodicAmount)} × {preview.data.numberOfPeriods}
+                  {formatCop(periodicAmount || "0")} × {numberOfPeriods || "0"}
                 </Text>
               </View>
               <Text style={[styles.previewLabel, { color: colors.muted }]}>Total de aportes planeados</Text>
-              <Text style={[styles.previewTotal, { color: colors.text }]}>{formatCop(preview.projectedTotal)}</Text>
+              <Text style={[styles.previewTotal, { color: colors.text }]}>
+                {formatCop(
+                  advanced && advancedPreview.success
+                    ? advancedPreview.projectedContributions
+                    : preview.success
+                      ? preview.projectedTotal
+                      : "0",
+                )}
+              </Text>
               <View style={[styles.previewNote, { backgroundColor: colors.background }]}>
-                <Text style={[styles.previewNoteText, { color: colors.muted }]}>Sin una tasa, el rendimiento proyectado es {formatCop("0")}.</Text>
+                <Text style={[styles.previewNoteText, { color: colors.muted }]}>
+                  {advanced
+                    ? "El saldo inicial y el rendimiento se verán por separado en el detalle."
+                    : `Sin una tasa, el rendimiento proyectado es ${formatCop("0")}.`}
+                </Text>
               </View>
             </AppCard>
           ) : (
@@ -341,7 +625,7 @@ export default function NewGoalScreen() {
             label={busy ? "Guardando…" : "Guardar esta ruta"}
             onPress={() => void submit()}
           />
-          <Text style={[styles.disclaimer, { color: colors.muted }]}>Esta meta guarda una proyección simple en COP. No conecta bancos ni mueve dinero.</Text>
+          <Text style={[styles.disclaimer, { color: colors.muted }]}>{advanced ? "Esta meta guardará supuestos avanzados y habilitará el registro real." : "Esta meta guarda una proyección simple en COP."} No conecta bancos ni mueve dinero.</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -382,6 +666,24 @@ const styles = StyleSheet.create({
   periodInput: { flex: 1 },
   stepper: { alignItems: "center", borderRadius: APP_RADII.medium, height: 54, justifyContent: "center", width: 54 },
   stepperText: { fontSize: 25, fontWeight: "700" },
+  advancedCard: { gap: APP_SPACING.sm },
+  advancedToggleRow: { alignItems: "center", flexDirection: "row", gap: APP_SPACING.md, justifyContent: "space-between" },
+  advancedToggleCopy: { flex: 1, gap: 4 },
+  advancedTitle: { fontSize: 18, fontWeight: "900", lineHeight: 23 },
+  advancedHelp: { fontSize: 13, lineHeight: 19 },
+  rateChoices: { gap: APP_SPACING.xs },
+  rateChoice: { alignItems: "center", borderRadius: APP_RADII.medium, borderWidth: 1.5, flexDirection: "row", gap: APP_SPACING.sm, minHeight: MINIMUM_TOUCH_TARGET, padding: APP_SPACING.sm },
+  radioDot: { alignItems: "center", borderRadius: 10, borderWidth: 2, height: 20, justifyContent: "center", width: 20 },
+  radioFill: { borderRadius: 5, height: 10, width: 10 },
+  rateChoiceCopy: { flex: 1, gap: 2 },
+  rateChoiceLabel: { fontSize: 15, fontWeight: "800", lineHeight: 20 },
+  rateChoiceHelp: { fontSize: 12, lineHeight: 17 },
+  otherRates: { flexDirection: "row", flexWrap: "wrap", gap: APP_SPACING.xs },
+  rateChip: { alignItems: "center", borderRadius: APP_RADII.pill, borderWidth: 1.5, justifyContent: "center", minHeight: MINIMUM_TOUCH_TARGET, paddingHorizontal: APP_SPACING.md },
+  rateChipText: { fontSize: 13, fontWeight: "800" },
+  unknownHelp: { borderRadius: APP_RADII.medium, gap: 4, padding: APP_SPACING.md },
+  unknownTitle: { fontSize: 15, fontWeight: "900" },
+  unknownText: { fontSize: 13, lineHeight: 19 },
   preview: { gap: APP_SPACING.sm },
   previewTop: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: APP_SPACING.sm, justifyContent: "space-between" },
   previewEquation: { flexShrink: 1, fontSize: 13, fontWeight: "700" },

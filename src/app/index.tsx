@@ -32,7 +32,7 @@ export default function HomeScreen() {
   const projectedTotal = useMemo(
     () =>
       goals
-        .reduce((total, goal) => total + BigInt(goal.projectedTotal), 0n)
+        .reduce((total, goal) => total + BigInt(goal.projectedContributions), 0n)
         .toString(),
     [goals],
   );
@@ -92,7 +92,7 @@ export default function HomeScreen() {
             <Text style={[styles.heroFootnote, { color: colors.muted }]}>
               {goals.length === 0
                 ? "Una meta simple solo necesita nombre, monto y duración."
-                : `${goals.length} ${goals.length === 1 ? "meta activa" : "metas activas"} · cálculo sin rendimiento`}
+                : `${goals.length} ${goals.length === 1 ? "ruta guardada" : "rutas guardadas"} · planes separados del ahorro real`}
             </Text>
           </AppCard>
         ) : null}
@@ -116,37 +116,53 @@ export default function HomeScreen() {
               title="Tus rutas activas"
             />
             {goals.map((goal, index) => (
-              <AppCard
-                accessibilityLabel={`${goal.name}. Total planeado ${formatCop(goal.projectedTotal)}. Aporte ${formatCop(goal.periodicAmount)} ${goal.periodicity === "MONTHLY" ? "mensual" : "anual"} durante ${goal.numberOfPeriods} periodos. Sin rendimiento.`}
-                accessible
-                key={goal.id}
-                style={styles.goalCard}
-              >
-                <View style={styles.goalTopline}>
-                  <Text style={[styles.goalIndex, { color: colors.accent }]}>{String(index + 1).padStart(2, "0")}</Text>
-                  <Tag accent>{goal.periodicity === "MONTHLY" ? "RITMO MENSUAL" : "RITMO ANUAL"}</Tag>
-                </View>
-                <Text accessibilityRole="header" style={[styles.goalName, { color: colors.text }]}>{goal.name}</Text>
-                <Text style={[styles.goalCaption, { color: colors.muted }]}>Destino planeado</Text>
-                <Text style={[styles.goalTotal, { color: colors.primary }]}>{formatCop(goal.projectedTotal)}</Text>
-                <View style={[styles.goalDivider, { backgroundColor: colors.border }]} />
-                <View style={styles.goalFacts}>
-                  <View style={styles.goalFact}>
-                    <Text style={[styles.factLabel, { color: colors.muted }]}>Aporte</Text>
-                    <Text style={[styles.factValue, { color: colors.text }]}>{formatCop(goal.periodicAmount)}</Text>
+              <View key={goal.id} style={styles.goalContainer}>
+                <AppCard
+                  accessibilityLabel={`${goal.name}. ${goal.projectionBlocked ? "Proyección bloqueada" : `Total planeado ${formatCop(goal.projectedTotal)}`}. Estado ${goal.status}.`}
+                  accessible
+                  style={styles.goalCard}
+                >
+                  <View style={styles.goalTopline}>
+                    <Text style={[styles.goalIndex, { color: colors.accent }]}>{String(index + 1).padStart(2, "0")}</Text>
+                    <View style={styles.cardTags}>
+                      <Tag>{goal.projectionMode === "ADVANCED" ? "AVANZADA" : "SIMPLE"}</Tag>
+                      <Tag accent>{goal.periodicity === "MONTHLY" ? "RITMO MENSUAL" : "RITMO ANUAL"}</Tag>
+                    </View>
                   </View>
-                  <View style={styles.goalFact}>
-                    <Text style={[styles.factLabel, { color: colors.muted }]}>Duración</Text>
-                    <Text style={[styles.factValue, { color: colors.text }]}>
-                      {goal.numberOfPeriods} {goal.periodicity === "MONTHLY" ? "meses" : "años"}
-                    </Text>
+                  <Text accessibilityRole="header" style={[styles.goalName, { color: colors.text }]}>{goal.name}</Text>
+                  <Text style={[styles.goalCaption, { color: colors.muted }]}>Destino planeado</Text>
+                  <Text style={[styles.goalTotal, { color: colors.primary }]}>{goal.projectionBlocked ? "Revisar datos" : formatCop(goal.projectedTotal)}</Text>
+                  <View style={[styles.goalDivider, { backgroundColor: colors.border }]} />
+                  <View style={styles.goalFacts}>
+                    <View style={styles.goalFact}>
+                      <Text style={[styles.factLabel, { color: colors.muted }]}>Aporte</Text>
+                      <Text style={[styles.factValue, { color: colors.text }]}>{formatCop(goal.periodicAmount)}</Text>
+                    </View>
+                    <View style={styles.goalFact}>
+                      <Text style={[styles.factLabel, { color: colors.muted }]}>Duración</Text>
+                      <Text style={[styles.factValue, { color: colors.text }]}>
+                        {goal.numberOfPeriods === undefined ? "Según configuración" : `${goal.numberOfPeriods} ${goal.periodicity === "MONTHLY" ? "meses" : "años"}`}
+                      </Text>
+                    </View>
+                    {goal.projectionMode === "ADVANCED" ? (
+                      <View style={styles.goalFact}>
+                        <Text style={[styles.factLabel, { color: colors.muted }]}>Saldo real</Text>
+                        <Text style={[styles.factValue, { color: colors.text }]}>{formatCop(goal.actualBalance)}</Text>
+                      </View>
+                    ) : null}
                   </View>
-                </View>
-                <View style={[styles.zeroYield, { backgroundColor: colors.background }]}>
-                  <View style={[styles.zeroDot, { backgroundColor: colors.accent }]} />
-                  <Text style={[styles.zeroText, { color: colors.muted }]}>Sin tasa: rendimiento proyectado {formatCop(goal.projectedYield)}</Text>
-                </View>
-              </AppCard>
+                  <View style={[styles.zeroYield, { backgroundColor: colors.background }]}>
+                    <View style={[styles.zeroDot, { backgroundColor: colors.accent }]} />
+                    <Text style={[styles.zeroText, { color: colors.muted }]}>Rendimiento proyectado {formatCop(goal.projectedYield)} · Estado {goal.status.toLowerCase()}</Text>
+                  </View>
+                </AppCard>
+                <AppButton
+                  accessibilityHint="Abre proyección, realidad, historial y estado"
+                  label="Abrir detalle"
+                  onPress={() => router.push({ pathname: MOBILE_ROUTES.goalDetail, params: { id: goal.id } })}
+                  variant="secondary"
+                />
+              </View>
             ))}
           </View>
         ) : null}
@@ -212,7 +228,9 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 23, fontWeight: "800", letterSpacing: -0.4 },
   body: { fontSize: 15, lineHeight: 22 },
   goalsSection: { gap: APP_SPACING.md },
+  goalContainer: { gap: APP_SPACING.xs },
   goalCard: { gap: APP_SPACING.xs },
+  cardTags: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: APP_SPACING.xs },
   goalTopline: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: APP_SPACING.xs, justifyContent: "space-between" },
   goalIndex: { fontSize: 16, fontWeight: "900", letterSpacing: 1 },
   goalName: { fontSize: 23, fontWeight: "800", letterSpacing: -0.4, lineHeight: 29, marginBottom: APP_SPACING.sm },
