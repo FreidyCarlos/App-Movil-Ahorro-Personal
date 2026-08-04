@@ -444,16 +444,31 @@ real; no se ejecutó falta de espacio ni presión deliberada de memoria.
 
 ### Fase 5 — Seguridad y robustez
 
-- ejecución técnica completada localmente; pendiente de revisión y publicación;
+- ejecución técnica revisada y publicada en `f8b4d56`;
 - mantener los límites como provisionales hasta una medición física autorizada;
 - repetir auditoría y validar manifiesto no depurable en Fase 7.
 
 ### Fase 6 — Validación visual y accesibilidad
 
-- pantallas pequeñas, claro/oscuro, texto aumentado y orientación admitida;
-- lector de pantalla, teclado, navegación táctil, contraste y reducción de
-  movimiento;
-- estados vacíos, errores y confirmaciones destructivas.
+- sistema visual e interfaz reorganizada: implementados localmente;
+- contraste AA, objetivos táctiles, tema automático, orientación vertical,
+  foco, semántica, estados y reducción de movimiento: verificados por contrato
+  y 6 pruebas nuevas;
+- suite completa: 15 archivos y 137 pruebas aprobadas;
+- pantalla pequeña, claro/oscuro, texto al 130 %, teclado, foco, navegación
+  táctil y reducción de movimiento: aprobados en Moto X4;
+- campo oculto por el teclado detectado, corregido con medición real y aprobado
+  al repetir la prueba;
+- árbol accesible: 50 nodos de la app, 9 descripciones y 6 de 6 etiquetas
+  críticas encontradas;
+- TalkBack habilitado manualmente y enlazado como servicio hablado, háptico y
+  audible: recorrido de foco aprobado en inicio, formulario y datos;
+- orden, etiquetas, frecuencia seleccionada, controles de cantidad y acciones
+  de exportación/selección verificados sin guardar, exportar ni importar;
+- preferencias restauradas, app detenida, Metro retirado, puerto local libre y
+  reenvío USB ausente;
+- Fase 6 cerrada técnicamente en local y pendiente de publicación. Fase 7 no
+  iniciada.
 
 ### Fase 7 — Validación funcional completa
 

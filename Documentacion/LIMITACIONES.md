@@ -162,11 +162,20 @@ valida todavía:
 - binario Android de producción, AAB, distribución, iOS, cifrado, biometría o
   PIN.
 
-La ejecución técnica local de Fase 5 revisó dependencias, permisos, logs,
+La Fase 5 publicada revisó dependencias, permisos, logs,
 archivos manipulados, límites, almacenamiento, modelo de amenazas y
-recuperación. Permanece pendiente su publicación y la medición física del caso
-máximo. La accesibilidad corresponde a Fase 6 y la compilación de producción con
-validación funcional completa, a Fase 7.
+recuperación. Permanece pendiente la medición física del caso máximo.
+
+La Fase 6 implementa el nuevo sistema visual, tema automático, contraste AA,
+texto envolvente, foco, objetivos táctiles y reducción de movimiento. En Moto
+X4 se aprobaron pantalla pequeña, claro/oscuro, texto al 130 %, teclado, tacto y
+movimiento reducido, incluida una corrección física del formulario sobre el
+teclado. El árbol accesible contiene las etiquetas esperadas. Permanece
+registrado que la activación automatizada de TalkBack no enlazó el servicio;
+la activación manual sí lo enlazó y permitió aprobar el recorrido de foco,
+etiquetas, estados y acciones en las tres pantallas. Todos los ajustes se
+restauraron. iOS y tablet continúan sin validación física. La compilación de
+producción con validación funcional completa corresponde a Fase 7.
 
 La capitalización mensual del núcleo solo admite una tasa única, meses
 calendario completos y ausencia de movimientos intermedios. Si el producto

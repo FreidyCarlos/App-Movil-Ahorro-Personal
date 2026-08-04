@@ -2,7 +2,6 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,12 +11,24 @@ import {
 import type { ImportPreview } from "../application/backup/backup-service.js";
 import { useApp } from "../mobile/presentation/app-provider.js";
 import { useAppColors } from "../mobile/presentation/theme.js";
+import {
+  AppButton,
+  AppCard,
+  PageIntro,
+  SectionHeading,
+  StatusMessage,
+  Tag,
+} from "../mobile/presentation/ui.js";
+import {
+  APP_RADII,
+  APP_SPACING,
+  MAX_CONTENT_WIDTH,
+} from "../mobile/presentation/visual-system.js";
 
 export default function DataScreen() {
   const colors = useAppColors();
   const router = useRouter();
-  const { busy, error, exportBackup, previewImport, confirmImport, clearError } =
-    useApp();
+  const { busy, error, exportBackup, previewImport, confirmImport, clearError } = useApp();
   const [preview, setPreview] = useState<ImportPreview>();
   const [notice, setNotice] = useState<string>();
 
@@ -54,7 +65,7 @@ export default function DataScreen() {
     }
     Alert.alert(
       "Reemplazar datos locales",
-      `Se importarán ${preview.goalCount} metas y ${preview.movementCount} movimientos. Antes se creará una copia automática del estado actual.`,
+      `Se importarán ${preview.goalCount} metas y ${preview.movementCount} movimientos. Antes se creará una copia automática del estado actual. Esta acción no combina historiales.`,
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -74,176 +85,172 @@ export default function DataScreen() {
           },
         },
       ],
+      { cancelable: true },
     );
   };
 
   return (
     <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: colors.background },
-      ]}
+      alwaysBounceVertical={false}
+      contentContainerStyle={styles.scrollContent}
+      style={{ backgroundColor: colors.background }}
     >
-      <Text style={[styles.title, { color: colors.text }]}>Tus datos</Text>
-      <Text style={[styles.help, { color: colors.muted }]}>
-        La importación valida el formato y el checksum. El modo disponible en
-        este MVP reemplaza todos los datos, nunca combina historiales.
-      </Text>
-
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
-      >
-        <Text style={[styles.cardTitle, { color: colors.text }]}>
-          Exportar copia completa
-        </Text>
-        <Text style={{ color: colors.muted }}>
-          El JSON no contiene credenciales bancarias, pero sí información de
-          tus metas. Guárdalo en un lugar privado.
-        </Text>
-        <ActionButton
-          disabled={busy}
-          label={busy ? "Procesando…" : "Crear y guardar copia"}
-          onPress={() => void runExport()}
-          primary
+      <View style={styles.container}>
+        <PageIntro
+          description="Exporta para conservar una copia o importa para reemplazar el estado local después de revisarlo."
+          eyebrow="Continuidad local"
+          title="Tus datos también necesitan una ruta de regreso."
         />
-      </View>
 
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
-      >
-        <Text style={[styles.cardTitle, { color: colors.text }]}>
-          Importar copia
-        </Text>
-        <Text style={{ color: colors.muted }}>
-          Primero verás un resumen. Nada se reemplaza sin tu confirmación.
-        </Text>
-        <ActionButton
-          disabled={busy}
-          label="Seleccionar archivo JSON"
-          onPress={() => void chooseImport()}
-        />
-      </View>
+        <AppCard style={styles.safetyStrip} tone="primary">
+          <View style={styles.tagRow}>
+            <Tag>JSON VERSIONADO</Tag>
+            <Tag>CHECKSUM</Tag>
+            <Tag accent>SIN CIFRADO</Tag>
+          </View>
+          <Text style={[styles.safetyText, { color: colors.muted }]}>El checksum ayuda a detectar daño accidental; no demuestra quién creó el archivo ni lo mantiene secreto.</Text>
+        </AppCard>
 
-      {preview !== undefined ? (
-        <View
-          accessibilityLiveRegion="polite"
-          style={[
-            styles.card,
-            { backgroundColor: colors.surface, borderColor: colors.primary },
-          ]}
-        >
-          <Text style={[styles.cardTitle, { color: colors.text }]}>
-            Vista previa verificada
-          </Text>
-          <Text style={{ color: colors.text }}>
-            Metas: {preview.goalCount}
-          </Text>
-          <Text style={{ color: colors.text }}>
-            Movimientos: {preview.movementCount}
-          </Text>
-          <Text style={{ color: colors.text }}>
-            Versión de esquema: {preview.schemaVersion}
-          </Text>
-          <Text style={{ color: colors.muted }} numberOfLines={2}>
-            Archivo: {preview.sourceFileName}
-          </Text>
-          <ActionButton
-            disabled={busy}
-            label="Confirmar reemplazo"
-            onPress={askForConfirmation}
-            danger
+        {notice === undefined ? null : <StatusMessage tone="success">{notice}</StatusMessage>}
+        {error === undefined ? null : <StatusMessage onDismiss={clearError} tone="danger">{error}</StatusMessage>}
+
+        <View style={styles.section}>
+          <SectionHeading
+            description="Una salida segura antes de cambiar de equipo o hacer pruebas."
+            number="01"
+            title="Crear una copia"
           />
+          <AppCard style={styles.actionCard}>
+            <View style={styles.actionHeader}>
+              <View style={[styles.actionSymbol, { backgroundColor: colors.accentSoft }]}>
+                <Text accessibilityElementsHidden style={[styles.actionSymbolText, { color: colors.accent }]}>01</Text>
+              </View>
+              <View style={styles.actionTitleBlock}>
+                <Text accessibilityRole="header" style={[styles.cardTitle, { color: colors.text }]}>Exportar todo</Text>
+                <Text style={[styles.cardKicker, { color: colors.accent }]}>COPIA PORTABLE</Text>
+              </View>
+            </View>
+            <Text style={[styles.cardBody, { color: colors.muted }]}>Incluye tus metas y configuraciones. Puede contener información financiera personal: elige un destino privado.</Text>
+            <AppButton
+              accessibilityHint="Crea una copia JSON y abre las opciones disponibles para guardarla"
+              disabled={busy}
+              label={busy ? "Procesando…" : "Crear y guardar copia"}
+              onPress={() => void runExport()}
+            />
+          </AppCard>
         </View>
-      ) : null}
 
-      {notice !== undefined ? (
-        <Text accessibilityLiveRegion="polite" style={{ color: colors.success }}>
-          {notice}
-        </Text>
-      ) : null}
-      {error !== undefined ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={clearError}
-          style={[styles.error, { borderColor: colors.danger }]}
-        >
-          <Text style={{ color: colors.danger }}>{error}</Text>
-        </Pressable>
-      ) : null}
+        <View style={styles.section}>
+          <SectionHeading
+            description="Primero se inspecciona el archivo. Nada cambia al seleccionarlo."
+            number="02"
+            title="Revisar una copia"
+          />
+          <AppCard style={styles.actionCard}>
+            <View style={styles.actionHeader}>
+              <View style={[styles.actionSymbol, { backgroundColor: colors.primarySoft }]}>
+                <Text accessibilityElementsHidden style={[styles.actionSymbolText, { color: colors.primary }]}>02</Text>
+              </View>
+              <View style={styles.actionTitleBlock}>
+                <Text accessibilityRole="header" style={[styles.cardTitle, { color: colors.text }]}>Seleccionar e inspeccionar</Text>
+                <Text style={[styles.cardKicker, { color: colors.primary }]}>SIN REEMPLAZAR</Text>
+              </View>
+            </View>
+            <Text style={[styles.cardBody, { color: colors.muted }]}>Validamos tamaño, formato, versión, estructura y checksum antes de mostrar el resumen.</Text>
+            <AppButton
+              accessibilityHint="Abre el selector de archivos JSON"
+              disabled={busy}
+              label="Elegir archivo JSON"
+              onPress={() => void chooseImport()}
+              variant="secondary"
+            />
+          </AppCard>
+        </View>
 
-      <Text style={[styles.warning, { color: colors.muted }]}>
-        La proyección muestra valores brutos estimados. No incluye retenciones,
-        impuestos, inflación, comisiones, GMF ni cambios futuros en la tasa. El
-        valor real puede ser menor.
-      </Text>
+        {preview === undefined ? null : (
+          <View style={styles.section}>
+            <SectionHeading
+              description="Este resumen ya superó la validación inicial. Comprueba las cantidades antes de continuar."
+              number="03"
+              title="Decidir el reemplazo"
+            />
+            <AppCard style={styles.previewCard} tone="accent">
+              <View style={styles.previewHeader}>
+                <Tag accent>ARCHIVO VERIFICADO</Tag>
+                <View style={[styles.verifiedDot, { backgroundColor: colors.success }]} />
+              </View>
+              <View
+                accessibilityLabel={`Copia verificada con ${preview.goalCount} metas, ${preview.movementCount} movimientos y esquema ${preview.schemaVersion}`}
+                accessible
+                style={styles.metrics}
+              >
+                <Metric label="Metas" value={String(preview.goalCount)} />
+                <Metric label="Movimientos" value={String(preview.movementCount)} />
+                <Metric label="Esquema" value={`v${preview.schemaVersion}`} />
+              </View>
+              <View style={[styles.fileName, { backgroundColor: colors.background }]}>
+                <Text style={[styles.fileLabel, { color: colors.muted }]}>Archivo seleccionado</Text>
+                <Text style={[styles.fileValue, { color: colors.text }]}>{preview.sourceFileName}</Text>
+              </View>
+              <StatusMessage tone="danger">Reemplazará todos los datos locales. Antes se crea una copia automática para recuperación.</StatusMessage>
+              <AppButton
+                accessibilityHint="Abre la confirmación final antes de reemplazar los datos"
+                disabled={busy}
+                label="Revisé el resumen: continuar"
+                onPress={askForConfirmation}
+                variant="danger"
+              />
+            </AppCard>
+          </View>
+        )}
+
+        <AppCard style={styles.privacyCard}>
+          <Text accessibilityRole="header" style={[styles.privacyTitle, { color: colors.text }]}>Privacidad sin letra pequeña</Text>
+          <Text style={[styles.cardBody, { color: colors.muted }]}>La base local y los JSON del MVP no están cifrados. La aplicación no guarda credenciales bancarias, pero una copia expuesta puede revelar tus metas.</Text>
+        </AppCard>
+
+        <Text style={[styles.warning, { color: colors.muted }]}>La proyección muestra valores brutos estimados. No incluye retenciones, impuestos, inflación, comisiones, GMF ni cambios futuros en la tasa. El valor real puede ser menor.</Text>
+      </View>
     </ScrollView>
   );
 }
 
-function ActionButton({
-  label,
-  disabled,
-  primary = false,
-  danger = false,
-  onPress,
-}: {
-  readonly label: string;
-  readonly disabled: boolean;
-  readonly primary?: boolean;
-  readonly danger?: boolean;
-  readonly onPress: () => void;
-}) {
+function Metric({ label, value }: { readonly label: string; readonly value: string }) {
   const colors = useAppColors();
-  const color = danger ? colors.danger : colors.primary;
   return (
-    <Pressable
-      accessibilityRole="button"
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.button,
-        {
-          backgroundColor: primary ? color : "transparent",
-          borderColor: color,
-          opacity: disabled || pressed ? 0.65 : 1,
-        },
-      ]}
-    >
-      <Text
-        style={{
-          color: primary ? colors.primaryText : color,
-          fontSize: 16,
-          fontWeight: "700",
-          textAlign: "center",
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
+    <View style={styles.metric}>
+      <Text style={[styles.metricValue, { color: colors.text }]}>{value}</Text>
+      <Text style={[styles.metricLabel, { color: colors.muted }]}>{label}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 20, gap: 16 },
-  title: { fontSize: 26, fontWeight: "800" },
-  help: { fontSize: 16, lineHeight: 23 },
-  card: { borderWidth: 1, borderRadius: 16, padding: 18, gap: 10 },
-  cardTitle: { fontSize: 18, fontWeight: "700" },
-  button: {
-    minHeight: 52,
-    borderRadius: 12,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    marginTop: 4,
-  },
-  error: { borderWidth: 1, borderRadius: 12, padding: 14 },
-  warning: { fontSize: 13, lineHeight: 19, marginTop: 8 },
+  scrollContent: { alignItems: "center", flexGrow: 1 },
+  container: { gap: APP_SPACING.xl, maxWidth: MAX_CONTENT_WIDTH, paddingBottom: 44, paddingHorizontal: 20, paddingTop: APP_SPACING.md, width: "100%" },
+  safetyStrip: { gap: APP_SPACING.sm },
+  tagRow: { flexDirection: "row", flexWrap: "wrap", gap: APP_SPACING.xs },
+  safetyText: { fontSize: 13, lineHeight: 19 },
+  section: { gap: APP_SPACING.md },
+  actionCard: { gap: APP_SPACING.md },
+  actionHeader: { alignItems: "center", flexDirection: "row", gap: APP_SPACING.sm },
+  actionSymbol: { alignItems: "center", borderRadius: APP_RADII.medium, height: 48, justifyContent: "center", width: 48 },
+  actionSymbolText: { fontSize: 25, fontWeight: "800" },
+  actionTitleBlock: { flex: 1, gap: 2 },
+  cardTitle: { fontSize: 19, fontWeight: "800", lineHeight: 25 },
+  cardKicker: { fontSize: 11, fontWeight: "900", letterSpacing: 1.1 },
+  cardBody: { fontSize: 14, lineHeight: 21 },
+  previewCard: { gap: APP_SPACING.md },
+  previewHeader: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: APP_SPACING.xs, justifyContent: "space-between" },
+  verifiedDot: { borderRadius: 6, height: 12, width: 12 },
+  metrics: { flexDirection: "row", flexWrap: "wrap", gap: APP_SPACING.sm },
+  metric: { flexGrow: 1, minWidth: 86 },
+  metricValue: { fontSize: 25, fontWeight: "900" },
+  metricLabel: { fontSize: 12, fontWeight: "700", marginTop: 2 },
+  fileName: { borderRadius: APP_RADII.small, gap: 4, padding: APP_SPACING.sm },
+  fileLabel: { fontSize: 11, fontWeight: "800", textTransform: "uppercase" },
+  fileValue: { fontSize: 13, fontWeight: "600", lineHeight: 19 },
+  privacyCard: { gap: APP_SPACING.xs },
+  privacyTitle: { fontSize: 18, fontWeight: "800" },
+  warning: { fontSize: 12, lineHeight: 18, paddingHorizontal: APP_SPACING.xs },
 });

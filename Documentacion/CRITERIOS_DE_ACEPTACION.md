@@ -2,8 +2,9 @@
 
 Fecha: 3 de agosto de 2026. Estos criterios definen el resultado del MVP; la
 evidencia móvil disponible alcanza el cierre complementario de Fase 4 con un
-development APK y un APK `preview` autónomo interno en Android 16. La ejecución
-técnica de Fase 5 quedó verificada localmente y pendiente de publicación.
+development APK y un APK `preview` autónomo interno en Android 16. La Fase 5
+está publicada y la Fase 6 quedó cerrada técnicamente en local, pendiente de
+publicación.
 
 ## Producto y metas
 
@@ -157,7 +158,7 @@ propia, WebView y ejecución dinámica; bloqueó permisos innecesarios y respald
 Android, reforzó archivos manipulados y recuperación, y mantuvo 0 hallazgos
 altos o críticos. CA-076 continúa reservado para Fase 7.
 
-## Experiencia y accesibilidad futuras
+## Experiencia y accesibilidad
 
 - **CA-080:** la creación simple aparece primero; tras activar la proyección
   avanzada, la captura sencilla de tasa ofrece exactamente las cuatro rutas
@@ -170,6 +171,17 @@ altos o críticos. CA-076 continúa reservado para Fase 7.
 - **CA-085:** gráficas no son la única representación.
 - **CA-086:** acciones destructivas tienen resumen y confirmación.
 - **CA-087:** estados vacío, carga, almacenamiento e integridad son útiles.
+
+Evidencia local de Fase 6: la interfaz implementa tema automático, reducción de
+movimiento, foco visible, encabezados y controles semánticos, objetivos táctiles
+de 48 puntos, texto sin truncado y estados vacío, carga, error, éxito, vista
+previa y confirmación destructiva. Las combinaciones de color evaluadas superan
+`4.5:1`; 15 archivos y 137 pruebas están aprobados. En el Moto X4 se aprobaron
+pantalla pequeña, ambos temas, texto al 130 %, foco, teclado, tacto y reducción
+de movimiento. El árbol accesible encontró las seis etiquetas críticas.
+TalkBack se habilitó manualmente, enlazó como servicio hablado y recorrió
+inicio, formulario y datos con foco visible, orden, nombres, estados y acciones
+correctos. CA-082, CA-083 y CA-084 quedan aprobados.
 
 ## Advertencias
 

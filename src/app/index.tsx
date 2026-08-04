@@ -1,8 +1,7 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import {
   ActivityIndicator,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,11 +12,30 @@ import { MOBILE_ROUTES } from "../application/mobile-navigation.js";
 import { useApp } from "../mobile/presentation/app-provider.js";
 import { formatCop } from "../mobile/presentation/format.js";
 import { useAppColors } from "../mobile/presentation/theme.js";
+import {
+  AppButton,
+  AppCard,
+  PageIntro,
+  SectionHeading,
+  StatusMessage,
+  Tag,
+} from "../mobile/presentation/ui.js";
+import {
+  APP_SPACING,
+  MAX_CONTENT_WIDTH,
+} from "../mobile/presentation/visual-system.js";
 
 export default function HomeScreen() {
   const router = useRouter();
   const colors = useAppColors();
   const { ready, busy, error, goals, refresh, clearError } = useApp();
+  const projectedTotal = useMemo(
+    () =>
+      goals
+        .reduce((total, goal) => total + BigInt(goal.projectedTotal), 0n)
+        .toString(),
+    [goals],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -29,139 +47,185 @@ export default function HomeScreen() {
 
   return (
     <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: colors.background },
-      ]}
+      alwaysBounceVertical={false}
+      contentContainerStyle={styles.scrollContent}
+      style={{ backgroundColor: colors.background }}
     >
-      <Text style={[styles.heading, { color: colors.text }]}>Tus metas</Text>
-      <Text style={[styles.intro, { color: colors.muted }]}>
-        La proyección simple suma tus aportes. Sin una tasa configurada no
-        muestra rendimientos.
-      </Text>
+      <View style={styles.container}>
+        <PageIntro
+          description="Organiza cada propósito por separado y mira cuánto planeas aportar, sin promesas ni rendimientos inventados."
+          eyebrow="Bitácora personal"
+          title="Tu dinero necesita una ruta, no presión."
+        />
 
-      {busy && !ready ? (
-        <View style={styles.centered}>
-          <ActivityIndicator color={colors.primary} size="large" />
-          <Text style={{ color: colors.muted }}>Preparando datos locales…</Text>
-        </View>
-      ) : null}
+        {busy && !ready ? (
+          <View accessibilityLiveRegion="polite" style={styles.centered}>
+            <ActivityIndicator color={colors.primary} size="large" />
+            <Text style={[styles.loadingText, { color: colors.muted }]}>Preparando tu espacio local…</Text>
+          </View>
+        ) : null}
 
-      {error !== undefined ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Cerrar mensaje de error"
-          onPress={clearError}
-          style={[styles.message, { borderColor: colors.danger }]}
-        >
-          <Text style={{ color: colors.danger }}>{error}</Text>
-        </Pressable>
-      ) : null}
+        {error === undefined ? null : (
+          <StatusMessage tone="danger" onDismiss={clearError}>{error}</StatusMessage>
+        )}
 
-      {ready && goals.length === 0 ? (
-        <View
-          style={[
-            styles.empty,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
-        >
-          <Text style={[styles.cardTitle, { color: colors.text }]}>
-            Aún no tienes metas
-          </Text>
-          <Text style={{ color: colors.muted }}>
-            Crea una proyección sencilla con un monto y una duración.
-          </Text>
-        </View>
-      ) : null}
+        {ready ? (
+          <AppCard
+            accessibilityLabel={
+              goals.length === 0
+                ? "Resumen: todavía no hay metas"
+                : `Resumen: ${goals.length} metas y ${formatCop(projectedTotal)} en aportes planeados`
+            }
+            accessible
+            style={styles.hero}
+            tone="primary"
+          >
+            <View style={styles.heroTop}>
+              <Tag>{goals.length === 0 ? "LISTO PARA EMPEZAR" : "PANORAMA LOCAL"}</Tag>
+              <RouteMotif />
+            </View>
+            <Text style={[styles.heroLabel, { color: colors.muted }]}>Aportes planeados</Text>
+            <Text style={[styles.heroTotal, { color: colors.text }]}>
+              {formatCop(projectedTotal)}
+            </Text>
+            <View style={[styles.heroRule, { backgroundColor: colors.primary }]} />
+            <Text style={[styles.heroFootnote, { color: colors.muted }]}>
+              {goals.length === 0
+                ? "Una meta simple solo necesita nombre, monto y duración."
+                : `${goals.length} ${goals.length === 1 ? "meta activa" : "metas activas"} · cálculo sin rendimiento`}
+            </Text>
+          </AppCard>
+        ) : null}
 
-      {goals.map((goal) => (
-        <View
-          key={goal.id}
-          style={[
-            styles.card,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
-        >
-          <Text style={[styles.cardTitle, { color: colors.text }]}>
-            {goal.name}
-          </Text>
-          <Text style={[styles.total, { color: colors.primary }]}>
-            {formatCop(goal.projectedTotal)}
-          </Text>
-          <Text style={{ color: colors.muted }}>
-            {formatCop(goal.periodicAmount)}{" "}
-            {goal.periodicity === "MONTHLY" ? "al mes" : "al año"} durante{" "}
-            {goal.numberOfPeriods}{" "}
-            {goal.periodicity === "MONTHLY" ? "meses" : "años"}
-          </Text>
-          <Text style={[styles.noYield, { color: colors.muted }]}>
-            Rendimiento proyectado: {formatCop(goal.projectedYield)}
-          </Text>
-        </View>
-      ))}
+        {ready && goals.length === 0 ? (
+          <AppCard style={styles.empty} tone="accent">
+            <Text accessibilityRole="header" style={[styles.emptyTitle, { color: colors.text }]}>Traza tu primer destino</Text>
+            <Text style={[styles.body, { color: colors.muted }]}>Dile un nombre, define una cadencia y deja que la app ordene el recorrido.</Text>
+            <AppButton
+              accessibilityHint="Abre el formulario de una meta simple"
+              label="Crear mi primera meta"
+              onPress={() => router.push(MOBILE_ROUTES.createGoal)}
+            />
+          </AppCard>
+        ) : null}
 
-      <Pressable
-        accessibilityRole="button"
-        disabled={!ready || busy}
-        onPress={() => router.push(MOBILE_ROUTES.createGoal)}
-        style={({ pressed }) => [
-          styles.primaryButton,
-          {
-            backgroundColor: colors.primary,
-            opacity: !ready || busy || pressed ? 0.65 : 1,
-          },
-        ]}
-      >
-        <Text style={[styles.buttonText, { color: colors.primaryText }]}>
-          Crear meta simple
-        </Text>
-      </Pressable>
+        {goals.length > 0 ? (
+          <View style={styles.goalsSection}>
+            <SectionHeading
+              description="Cada tarjeta resume un plan; no representa dinero ya ahorrado."
+              title="Tus rutas activas"
+            />
+            {goals.map((goal, index) => (
+              <AppCard
+                accessibilityLabel={`${goal.name}. Total planeado ${formatCop(goal.projectedTotal)}. Aporte ${formatCop(goal.periodicAmount)} ${goal.periodicity === "MONTHLY" ? "mensual" : "anual"} durante ${goal.numberOfPeriods} periodos. Sin rendimiento.`}
+                accessible
+                key={goal.id}
+                style={styles.goalCard}
+              >
+                <View style={styles.goalTopline}>
+                  <Text style={[styles.goalIndex, { color: colors.accent }]}>{String(index + 1).padStart(2, "0")}</Text>
+                  <Tag accent>{goal.periodicity === "MONTHLY" ? "RITMO MENSUAL" : "RITMO ANUAL"}</Tag>
+                </View>
+                <Text accessibilityRole="header" style={[styles.goalName, { color: colors.text }]}>{goal.name}</Text>
+                <Text style={[styles.goalCaption, { color: colors.muted }]}>Destino planeado</Text>
+                <Text style={[styles.goalTotal, { color: colors.primary }]}>{formatCop(goal.projectedTotal)}</Text>
+                <View style={[styles.goalDivider, { backgroundColor: colors.border }]} />
+                <View style={styles.goalFacts}>
+                  <View style={styles.goalFact}>
+                    <Text style={[styles.factLabel, { color: colors.muted }]}>Aporte</Text>
+                    <Text style={[styles.factValue, { color: colors.text }]}>{formatCop(goal.periodicAmount)}</Text>
+                  </View>
+                  <View style={styles.goalFact}>
+                    <Text style={[styles.factLabel, { color: colors.muted }]}>Duración</Text>
+                    <Text style={[styles.factValue, { color: colors.text }]}>
+                      {goal.numberOfPeriods} {goal.periodicity === "MONTHLY" ? "meses" : "años"}
+                    </Text>
+                  </View>
+                </View>
+                <View style={[styles.zeroYield, { backgroundColor: colors.background }]}>
+                  <View style={[styles.zeroDot, { backgroundColor: colors.accent }]} />
+                  <Text style={[styles.zeroText, { color: colors.muted }]}>Sin tasa: rendimiento proyectado {formatCop(goal.projectedYield)}</Text>
+                </View>
+              </AppCard>
+            ))}
+          </View>
+        ) : null}
 
-      <Pressable
-        accessibilityRole="button"
-        disabled={!ready || busy}
-        onPress={() => router.push(MOBILE_ROUTES.data)}
-        style={({ pressed }) => [
-          styles.secondaryButton,
-          {
-            borderColor: colors.primary,
-            opacity: !ready || busy || pressed ? 0.65 : 1,
-          },
-        ]}
-      >
-        <Text style={[styles.buttonText, { color: colors.primary }]}>
-          Exportar o importar datos
-        </Text>
-      </Pressable>
+        {goals.length > 0 ? (
+          <View style={styles.actions}>
+            <AppButton
+              disabled={!ready || busy}
+              label="Añadir otra meta"
+              onPress={() => router.push(MOBILE_ROUTES.createGoal)}
+            />
+            <AppButton
+              accessibilityHint="Abre exportación e importación de copias"
+              disabled={!ready || busy}
+              label="Cuidar mis datos"
+              onPress={() => router.push(MOBILE_ROUTES.data)}
+              variant="secondary"
+            />
+          </View>
+        ) : null}
+
+        {ready && goals.length === 0 ? (
+          <AppButton
+            accessibilityHint="Abre exportación e importación de copias"
+            disabled={busy}
+            label="Copias y privacidad"
+            onPress={() => router.push(MOBILE_ROUTES.data)}
+            variant="quiet"
+          />
+        ) : null}
+
+        <Text style={[styles.disclaimer, { color: colors.muted }]}>La proyección muestra valores brutos estimados. No incluye retenciones, impuestos, inflación, comisiones, GMF ni cambios futuros en la tasa. El valor real puede ser menor.</Text>
+      </View>
     </ScrollView>
   );
 }
 
+function RouteMotif() {
+  const colors = useAppColors();
+  return (
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.routeMotif}>
+      {[12, 24, 38].map((height, index) => (
+        <View key={height} style={[styles.routeBar, { backgroundColor: index === 2 ? colors.accent : colors.primary, height }]} />
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 20, gap: 16 },
-  heading: { fontSize: 28, fontWeight: "700" },
-  intro: { fontSize: 16, lineHeight: 23 },
-  centered: { minHeight: 180, alignItems: "center", justifyContent: "center", gap: 12 },
-  message: { borderWidth: 1, borderRadius: 12, padding: 14 },
-  empty: { borderWidth: 1, borderRadius: 16, padding: 20, gap: 8 },
-  card: { borderWidth: 1, borderRadius: 16, padding: 18, gap: 8 },
-  cardTitle: { fontSize: 18, fontWeight: "700" },
-  total: { fontSize: 26, fontWeight: "800" },
-  noYield: { marginTop: 4, fontSize: 13 },
-  primaryButton: {
-    minHeight: 52,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 18,
-  },
-  secondaryButton: {
-    minHeight: 52,
-    borderRadius: 14,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 18,
-  },
-  buttonText: { fontSize: 16, fontWeight: "700", textAlign: "center" },
+  scrollContent: { alignItems: "center", flexGrow: 1 },
+  container: { gap: APP_SPACING.xl, maxWidth: MAX_CONTENT_WIDTH, paddingBottom: 44, paddingHorizontal: 20, paddingTop: 28, width: "100%" },
+  centered: { alignItems: "center", gap: APP_SPACING.sm, justifyContent: "center", minHeight: 180 },
+  loadingText: { fontSize: 15, fontWeight: "600" },
+  hero: { gap: APP_SPACING.sm, overflow: "hidden" },
+  heroTop: { alignItems: "flex-start", flexDirection: "row", flexWrap: "wrap", gap: APP_SPACING.sm, justifyContent: "space-between" },
+  heroLabel: { fontSize: 14, fontWeight: "700", marginTop: APP_SPACING.xs },
+  heroTotal: { fontSize: 37, fontWeight: "900", letterSpacing: -1.4 },
+  heroRule: { borderRadius: 2, height: 4, marginTop: APP_SPACING.xs, width: 56 },
+  heroFootnote: { fontSize: 14, lineHeight: 20 },
+  routeMotif: { alignItems: "flex-end", flexDirection: "row", gap: 5, height: 40 },
+  routeBar: { borderRadius: 4, width: 7 },
+  empty: { gap: APP_SPACING.md },
+  emptyTitle: { fontSize: 23, fontWeight: "800", letterSpacing: -0.4 },
+  body: { fontSize: 15, lineHeight: 22 },
+  goalsSection: { gap: APP_SPACING.md },
+  goalCard: { gap: APP_SPACING.xs },
+  goalTopline: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: APP_SPACING.xs, justifyContent: "space-between" },
+  goalIndex: { fontSize: 16, fontWeight: "900", letterSpacing: 1 },
+  goalName: { fontSize: 23, fontWeight: "800", letterSpacing: -0.4, lineHeight: 29, marginBottom: APP_SPACING.sm },
+  goalCaption: { fontSize: 13, fontWeight: "700" },
+  goalTotal: { fontSize: 30, fontWeight: "900", letterSpacing: -0.8 },
+  goalDivider: { height: 1, marginVertical: APP_SPACING.sm },
+  goalFacts: { flexDirection: "row", flexWrap: "wrap", gap: APP_SPACING.lg },
+  goalFact: { flexGrow: 1, minWidth: 120 },
+  factLabel: { fontSize: 12, fontWeight: "700", marginBottom: 3, textTransform: "uppercase" },
+  factValue: { fontSize: 16, fontWeight: "800", lineHeight: 22 },
+  zeroYield: { alignItems: "center", borderRadius: 12, flexDirection: "row", gap: APP_SPACING.xs, marginTop: APP_SPACING.sm, padding: APP_SPACING.sm },
+  zeroDot: { borderRadius: 4, height: 8, width: 8 },
+  zeroText: { flex: 1, fontSize: 13, fontWeight: "600", lineHeight: 18 },
+  actions: { gap: APP_SPACING.sm },
+  disclaimer: { fontSize: 12, lineHeight: 18, paddingHorizontal: APP_SPACING.xs },
 });

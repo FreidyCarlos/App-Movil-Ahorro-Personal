@@ -14,13 +14,24 @@ Expo/React Native inicial, formulario de meta simple, adaptadores móviles de
 SQLite y archivos, un development APK generado con EAS y un APK `preview`
 aprobado como compilación autónoma interna.
 
-La Fase 5 ejecutó la revisión local de seguridad y robustez: dependencias,
+La Fase 5 ejecutó y publicó la revisión de seguridad y robustez: dependencias,
 permisos, logs, archivos manipulados, límites, almacenamiento, recuperación y
 modelo de amenazas. La configuración futura deshabilita el respaldo automático
 de Android y bloquea permisos heredados de almacenamiento; las copias recién
 escritas se verifican antes de proteger una importación y una base incompleta ya
-no puede confundirse con una instalación nueva. El cierre está pendiente de
-revisión y publicación; no se generó otro APK.
+no puede confundirse con una instalación nueva.
+
+La Fase 6 quedó completada localmente. La interfaz adopta una identidad propia de **ruta
+de ahorro**, reorganiza inicio, creación de meta y copias con jerarquía
+editorial, tema claro/oscuro, foco visible, objetivos táctiles de 48 puntos,
+texto envolvente y reducción de movimiento. La implementación y 137 pruebas
+están aprobadas localmente. En el Moto X4 se aprobaron pantalla pequeña, ambos
+temas, texto al 130 %, foco, teclado, navegación táctil y reducción de
+movimiento; además se corrigió y repitió el ajuste del formulario sobre el
+teclado. TalkBack se habilitó manualmente, quedó enlazado y recorrió inicio,
+formulario y datos con orden, nombres, estados y acciones accesibles correctos.
+El dispositivo y el entorno local se restauraron al terminar. No se generó
+otro APK, no se inició la Fase 7 y la publicación de Fase 6 sigue pendiente.
 
 El núcleo calcula proyecciones simples y avanzadas, normaliza tasas, reconstruye
 movimientos reales, genera cierres, compara proyectado frente a real y valida
@@ -186,6 +197,7 @@ automática de historiales queda fuera del MVP.
 - [Respaldos e importación](Documentacion/RESPALDOS_E_IMPORTACION.md)
 - [Modelo de amenazas](Documentacion/MODELO_DE_AMENAZAS.md)
 - [Seguridad y robustez — Fase 5](Documentacion/SEGURIDAD_Y_ROBUSTEZ.md)
+- [Validación visual y accesibilidad — Fase 6](Documentacion/VALIDACION_VISUAL_Y_ACCESIBILIDAD.md)
 
 La documentación pública del proyecto se mantiene en `Documentacion/`.
 
